@@ -34,8 +34,8 @@ jobs:
         pip install --editable .[dev]
     - name: Run Black
       run: |
-        black --check sleap_io tests
+        black --check sleap_anipose tests
     
     - name: Run pydocstyle
       run: |
-        pydocstyle --convention=google sleap_io/
+        pydocstyle --convention=google sleap_anipose/
