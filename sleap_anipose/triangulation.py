@@ -93,6 +93,7 @@ def triangulate(session, disp_progress=False):
 
 
 def reproject(session):
+    """Reproject triangulated points to each camera's view."""
     cgroup = CameraGroup.load(session / "calibration.toml")
     cams = cgroup.get_names()
 

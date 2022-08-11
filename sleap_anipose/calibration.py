@@ -8,7 +8,7 @@ from aniposelib.utils import load_pose2d_fnames
 
 
 def make_histogram(session, reprojection_error):
-    """ """
+    """Make a visualization histogram of the reprojection errors."""
     fig = plt.figure(figsize=(8, 6), facecolor="w", dpi=120)
     plt.hist(reprojection_error.ravel(), bins=np.linspace(0, 25, 50), density=True)
     plt.title("Reprojection Error Distribution Across All Views")
@@ -20,11 +20,12 @@ def make_histogram(session, reprojection_error):
 
 
 def make_reprojection_imgs(session, detections, reprojections):
-    """ """
+    """Make visualization of calibrated board corners."""
     pass
 
 
 def generate_images(session, metadata):
+    """Generate visualizations for inspection of calibration quality."""
     common_corners, _, reproj_corners = metadata
     reprojection_errors = np.linalg.norm(common_corners - reproj_corners, axis=-1)
     make_histogram(session, reprojection_errors)
@@ -34,6 +35,7 @@ def generate_images(session, metadata):
 
 
 def collect_metadata(rows, cgroup):
+    """Load metadata for calibration."""
     frames_per_view = [[x[i]["framenum"][1] for i in range(len(x))] for x in rows]
     common_frames = list(set.intersection(*[set(x) for x in frames_per_view]))
     idxs_per_view = [
