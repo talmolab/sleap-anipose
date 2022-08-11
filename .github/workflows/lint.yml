@@ -1,0 +1,41 @@
+# This action runs:
+# 
+# 1. Linting with black
+#
+# 2. Docstring style checking with pydocstyle 
+# Note: This uses Google-style docstring convention
+# Ref: https://google.github.io/styleguide/pyguide.html
+
+name: Lint
+
+on:
+  push:
+    paths:
+      - "sleap_anipose/**"
+      - "tests/**"
+      - ".github/workflows/lint.yml"
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: "ubuntu-22.04"
+    steps:
+
+    - name: Checkout repo
+      uses: actions/checkout@v3.0.2
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.8
+
+    - name: Install dependencies
+      run: |
+        pip install --editable .[dev]
+    - name: Run Black
+      run: |
+        black --check sleap_anipose tests
+    
+    - name: Run pydocstyle
+      run: |
+        pydocstyle --convention=google sleap_anipose/

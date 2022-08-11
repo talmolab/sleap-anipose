@@ -1,0 +1,70 @@
+# Continuous integration
+name: CI
+
+on:
+  push:
+    paths:
+      - "sleap_anipose/**"
+      - "tests/**"
+      - ".github/workflows/ci.yml"
+      - "environment.yml"
+      - "setup.cfg"
+
+jobs:
+  # Tests with pytest
+  tests:
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["ubuntu-22.04", "windows-2022"]
+        python: [3.8]
+
+    name: Tests (${{ matrix.os }}, Python ${{ matrix.python }})
+    runs-on: ${{ matrix.os }}
+
+    steps:
+
+      - name: Checkout repo
+        uses: actions/checkout@v3.0.2
+
+      - name: Cache conda
+        uses: actions/cache@v1
+        env:
+          # Increase this value to reset cache if environment.yml has not changed
+          CACHE_NUMBER: 0
+        with:
+          path: ~/conda_pkgs_dir
+          key: ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles('environment.yml', 'setup.cfg') }}
+
+      - name: Setup Miniconda
+        # https://github.com/conda-incubator/setup-miniconda
+        uses: conda-incubator/setup-miniconda@v2.1.1
+        with:
+          python-version: ${{ matrix.python }}
+          use-only-tar-bz2: true # IMPORTANT: This needs to be set for caching to work properly!
+          environment-file: environment.yml
+          activate-environment: sleap-anipose
+
+      - name: Print environment info
+        shell: bash -l {0}
+        run: |
+          which python
+          conda info
+          conda list
+      - name: Test with pytest
+        if: ${{ !(startsWith(matrix.os, 'ubuntu') && matrix.python == 3.8) }}
+        shell: bash -l {0}
+        run: |
+          pytest
+      - name: Test with pytest (with coverage)
+        if: ${{ startsWith(matrix.os, 'ubuntu') && matrix.python == 3.8 }}
+        shell: bash -l {0}
+        run: |
+          pytest --cov=sleap_anipose --cov-report=xml tests/
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3.1.0
+        if: ${{ startsWith(matrix.os, 'ubuntu') && matrix.python == 3.8 }}
+        with:
+          fail_ci_if_error: true
+          verbose: false
