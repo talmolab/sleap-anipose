@@ -26,7 +26,7 @@ def load_tracks(session: str) -> np.ndarray:
     """Load all view tracks for a session folder.
 
     Args:
-        session: The path pointing to the session directory (relative to the 
+        session: The path pointing to the session directory (relative to the
             working directory).
 
     Returns:
@@ -38,29 +38,32 @@ def load_tracks(session: str) -> np.ndarray:
 
 
 def triangulate(
-    p2d: Union[np.ndarray, str], calib: Union[CameraGroup, str], 
-    save: bool = False, session: str = '.', disp_progress: bool = False
-    ) -> np.ndarray:
+    p2d: Union[np.ndarray, str],
+    calib: Union[CameraGroup, str],
+    save: bool = False,
+    session: str = ".",
+    disp_progress: bool = False,
+) -> np.ndarray:
     """Triangulate 3D points for a given session.
 
     Args:
-        p2d: The path pointing to the session directory (relative to the 
-            working directory) or a (n_cams, n_frames, n_tracks, n_nodes, 2) 
+        p2d: The path pointing to the session directory (relative to the
+            working directory) or a (n_cams, n_frames, n_tracks, n_nodes, 2)
             array of the 2D points from different views.
-        calib: The path pointing to the calibration file or the object 
+        calib: The path pointing to the calibration file or the object
             containing the camera data. Note that the order of the cameras in
             the CameraGroup object must be the same as the order of the arrays
-            along the camera axis. 
+            along the camera axis.
         save: A flag determining whether or not to save the results of
             triangulation.
-        session: The path to the session directory to save the points to. If 
+        session: The path to the session directory to save the points to. If
             not specified, will save to the current working directory.
         disp_progress: A flag determining whether or not to show triangulation
             progress, false by default.
 
     Returns:
         A matrix of shape (n_frames, n_tracks, n_nodes, 3) containing the
-        triangulated 3D points. If save is True, the matrix will be saved to 
+        triangulated 3D points. If save is True, the matrix will be saved to
         the session folder as 'points3d.h5'.
     """
     if type(p2d) == str:
@@ -77,12 +80,13 @@ def triangulate(
 
     init_points = np.stack(
         [
-            cgroup.triangulate_optim(points_2d[:, :, track],
-            init_progress=disp_progress) 
+            cgroup.triangulate_optim(
+                points_2d[:, :, track], init_progress=disp_progress
+            )
             for track in range(n_tracks)
         ],
-        axis=1
-    ) # (n_frames, n_tracks, n_nodes, 3)
+        axis=1,
+    )  # (n_frames, n_tracks, n_nodes, 3)
 
     points_3d = np.stack(
         [
@@ -93,72 +97,77 @@ def triangulate(
     )  # (n_frames, n_tracks, n_nodes, 3)
 
     if save:
-        fname = Path(session) / 'points3d.h5'
-        with h5py.File(fname, 'w') as f:
+        fname = Path(session) / "points3d.h5"
+        with h5py.File(fname, "w") as f:
             f.create_dataset(
-                'tracks', data=points_3d, chunks=True, compression='gzip',
-                compression_opts=1
+                "tracks",
+                data=points_3d,
+                chunks=True,
+                compression="gzip",
+                compression_opts=1,
             )
-            f['tracks'].attrs[
-                'Description'
-                ] = 'Shape: (n_frames, n_tracks, n_nodes, 3).'
+            f["tracks"].attrs[
+                "Description"
+            ] = "Shape: (n_frames, n_tracks, n_nodes, 3)."
 
     return points_3d
 
 
 def reproject(
-    p3d: Union[np.ndarray, str], calib: Union[CameraGroup, str], 
-    save: bool = False, session: str = '.', 
-    ) -> np.ndarray:
+    p3d: Union[np.ndarray, str],
+    calib: Union[CameraGroup, str],
+    save: bool = False,
+    session: str = ".",
+) -> np.ndarray:
     """Reproject triangulated points to each camera's view.
-    
+
     Args:
-        p3d: A (n_frames, n_tracks, n_nodes, 3) array of the triangulated 3D 
-            points or the path pointing to the h5 file containing the points. 
-        calib: An object containing all the camera calibration data or the path 
-            pointing to its saved file. The order of the cameras in this object 
-            determines the order of the reprojections along the cameras axis. 
+        p3d: A (n_frames, n_tracks, n_nodes, 3) array of the triangulated 3D
+            points or the path pointing to the h5 file containing the points.
+        calib: An object containing all the camera calibration data or the path
+            pointing to its saved file. The order of the cameras in this object
+            determines the order of the reprojections along the cameras axis.
         save: A flag determining whether or not to save the reprojections.
         session: Path to the session containing the 3D points and calibration,
-            assumed to be the working directory if not specified. 
+            assumed to be the working directory if not specified.
 
     Returns:
         A (n_cams, n_frames, n_tracks, n_nodes, 2) ndarray of the reprojections
         for each camera view. If the save flag is true, a (n_frames, n_tracks,
-        n_nodes, 2) array of the corresponding reprojections will be saved to 
-        each view under the name 'reprojections.h5'. 
+        n_nodes, 2) array of the corresponding reprojections will be saved to
+        each view under the name 'reprojections.h5'.
     """
     if type(p3d) == str:
-        with h5py.File(p3d, 'r') as f:
-            points = f['tracks'][:] 
+        with h5py.File(p3d, "r") as f:
+            points = f["tracks"][:]
     else:
         points = p3d.copy()
-    
+
     if type(calib) == str:
         cgroup = CameraGroup.load(calib)
     else:
         cgroup = calib
 
-    n_frames, n_tracks, n_nodes,  _ = points.shape
+    n_frames, n_tracks, n_nodes, _ = points.shape
     cams = cgroup.get_names()
 
-    reprojections = cgroup.projection_points(p3d.reshape((-1,3))).reshape(
+    reprojections = cgroup.projection_points(p3d.reshape((-1, 3))).reshape(
         (len(cams), n_frames, n_tracks, n_nodes, 2)
-    ) 
+    )
 
     if save:
         for i, cam in enumerate(cams):
-            fname = Path(session) / cam / 'reprojections.h5'
-            with h5py.File(fname, 'w') as f:
+            fname = Path(session) / cam / "reprojections.h5"
+            with h5py.File(fname, "w") as f:
                 f.create_dataset(
-                    'tracks',
+                    "tracks",
                     data=reprojections[i],
                     chunks=True,
-                    compression='gzip',
-                    compression_opts = 1
+                    compression="gzip",
+                    compression_opts=1,
                 )
-                f['tracks'].attrs[
-                    'Description'
-                ] = f'Shape: (n_frames, n_tracks, n_nodes, 2). View: {cam}'
+                f["tracks"].attrs[
+                    "Description"
+                ] = f"Shape: (n_frames, n_tracks, n_nodes, 2). View: {cam}"
 
     return reprojections
