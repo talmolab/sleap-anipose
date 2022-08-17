@@ -6,7 +6,7 @@ from aniposelib.boards import CharucoBoard
 from aniposelib.cameras import CameraGroup
 import h5py
 from pathlib import Path
-from typing import Tuple, List, Dict
+from typing import Tuple, List, Dict, Union
 import imageio
 from random import sample
 import toml
@@ -68,7 +68,6 @@ def make_reproj_imgs(
         save: Flag determining whether or not to save images to the session.
 
     """
-
     cam_folders = [x for x in Path(session).iterdir() if x.is_dir()]
     sampled_frames = sample(frames, n_samples)
 
@@ -143,8 +142,6 @@ def get_metadata(
             corners reprojected into each view. Ordering of views same as
             the order found in the cgroup input. Saved under the
             'reprojected_corners' key in the metadata file.
-
-
     """
     frames_per_view = [
         [x[i]["framenum"][1] for i in range(len(x))] for x in corner_data
@@ -304,12 +301,7 @@ def write_board(
 
 def calibrate(
     session: str,
-    board_width: int,
-    board_height: int,
-    square_length: float,
-    marker_length: float,
-    marker_bits: int,
-    dict_size: int,
+    board: Union[str, CharucoBoard, Dict],
     save_calib: bool = False,
     save_metadata: bool = False,
     histogram: bool = False,
@@ -322,13 +314,15 @@ def calibrate(
     Args:
         session: Path pointing to the session to calibrate, must include the
             calibration board images in view subfolders.
-        board_width: Number of squares along the width of the board.
-        board_height: Number of squares along the height of the board.
-        square_length: Length of square edge in any measured units.
-        marker_length: Length of marker edge in the same measured units as the
-            square length.
-        marker_bits: Number of bits encoded in the marker images.
-        dict_size: Size of the dictionary used for marker encoding.
+        board: Either the path pointing to the board.toml file, the direct CharucoBoard
+            object, or a dictionary with the following key / value pairs:
+                'board_width': Number of squares along the width of the board.
+                'board_height': Number of squares along the height of the board.
+                'square_length': Length of square edge in any measured units.
+                'marker_length': Length of marker edge in the same measured units as the
+                    square length.
+                'marker_bits': Number of bits encoded in the marker images.
+                'dict_size': Size of the dictionary used for marker encoding.
         save_calib: Flag determining whether to save the calibration to the
             session.
         save_metadata: Flag determining whether to save the calibration metadata
@@ -355,10 +349,6 @@ def calibrate(
             reprojections: A (n_cams, n_frames, n_corners, 2) array of the
                 reprojected calibration board corners.
     """
-    board = CharucoBoard(
-        board_width, board_height, square_length, marker_length, marker_bits, dict_size
-    )
-
     board_vids = [x.as_posix() for x in Path(session).rglob("*.MOV")]
 
     if len(board_vids) == 0:
@@ -369,7 +359,21 @@ def calibrate(
     cam_names = [x.name for x in Path(session).iterdir() if x.is_dir()]
     cgroup = CameraGroup.from_names(cam_names)
 
-    _, corners = cgroup.calibrate_videos(board_vids, board)
+    if type(board) == str:
+        calib_board = read_board(board)
+    elif type(board) == CharucoBoard:
+        calib_board = board
+    else:
+        calib_board = CharucoBoard(
+            board["board_width"],
+            board["board_height"],
+            board["square_length"],
+            board["marker_length"],
+            board["marker_bits"],
+            board["dict_size"],
+        )
+
+    _, corners = cgroup.calibrate_videos(board_vids, calib_board)
     frames, detections, triangulations, reprojections = get_metadata(
         corners, cgroup, save_metadata, session
     )
