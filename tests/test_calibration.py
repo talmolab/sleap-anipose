@@ -10,12 +10,13 @@ import toml
 
 def test_calibrate(minimal_session, tmp_path):
     cam_names = [x.name for x in Path(minimal_session).iterdir() if x.is_dir()]
-    save_calib = ~(Path(minimal_session) / "calibration.toml").exists()
     board = read_board((Path(minimal_session) / "board.toml").as_posix())
-    cgroup, _ = calibrate(minimal_session, board, save_calib)
+    tmp_calib = tmp_path / "calibration"
+    tmp_calib.mkdir()
+    cgroup, _ = calibrate(minimal_session, board, True, tmp_calib.as_posix())
 
     # Testing the basics of the calibration.
-    assert cgroup.get_names == cam_names
+    assert cgroup.get_names() == cam_names
 
     # Testing the shapes of the output matrices.
     intrinsics = [np.array(x["matrix"]) for x in cgroup.get_dicts()]
@@ -28,14 +29,8 @@ def test_calibrate(minimal_session, tmp_path):
         assert len(t) == 3
 
     # Testing the saving functionality.
-    if save_calib:
-        assert (Path(minimal_session) / "calibration.toml").exists()
-        loaded_cgroup = CameraGroup.load(Path(minimal_session) / "calibration.toml")
-    else:
-        tmp_calib = tmp_path / "calibration"
-        tmp_calib.mkdir()
-        cgroup.dump(tmp_calib / "calibration.toml")
-        loaded_cgroup = CameraGroup.load(tmp_calib / "calibration.toml")
+    cgroup.dump(tmp_calib / "calibration.toml")
+    loaded_cgroup = CameraGroup.load(tmp_calib / "calibration.toml")
 
     assert loaded_cgroup.get_names() == cgroup.get_names()
 
@@ -53,36 +48,23 @@ def test_get_metadata(minimal_session, tmp_path):
     cam_names = [x.name for x in Path(minimal_session).iterdir() if x.is_dir()]
     cgroup = CameraGroup.from_names(cam_names)
 
-    board_vids = list(Path(minimal_session).rglob("*.MOV"))
-    if len(board_vids) == 0:
-        make_calibration_videos(minimal_session)
-        board_vids = [[x.as_posix()] for x in minimal_session.rglob("*.MOV")]
-    else:
-        board_vids = [[x.as_posix()] for x in board_vids]
-
+    board_vids = [[x.as_posix()] for x in list(Path(minimal_session).rglob("*.MOV"))]
     board = read_board((Path(minimal_session) / "board.toml").as_posix())
-    corner_data, _ = cgroup.calibrate_videos(board_vids, board, verbose=False)
 
-    save = ~(Path(minimal_session) / "calibration_metadata.h5").exists()
+    tmp_calib = tmp_path / "calib_meta"
+    tmp_calib.mkdir()
+
+    _, corner_data = cgroup.calibrate_videos(board_vids, board, verbose=False)
+    frames, detections, triangulations, reprojections = get_metadata(
+        corner_data, cgroup, save=True, session=tmp_calib.as_posix()
+    )
 
     # Testing saving functionality.
-    if save:
-        frames, detections, triangulations, reprojections = get_metadata(
-            corner_data, cgroup, save, session=minimal_session
-        )
-        assert (Path(minimal_session) / "calibration_metadata.h5").exists()
-        loading_path = Path(minimal_session) / "calibration_metadata.h5"
-    else:
-        tmp_calib = tmp_path / "calib_meta"
-        tmp_calib.mkdir()
-        frames, detections, triangulations, reprojections = get_metadata(
-            corner_data, cgroup, save=True, session=tmp_calib.as_posix()
-        )
-        assert (tmp_calib / "calibration_metadata.h5").exists()
-        loading_path = tmp_calib / "calibration_metadata.h5"
+    assert (tmp_calib / "calibration.metadata.h5").exists()
+    loading_path = tmp_calib / "calibration.metadata.h5"
 
     # Testing the shapes of output matrices.
-    board_width, board_height = board.get_size
+    board_width, board_height = board.get_size()
     n_frames = len(frames)
     n_corners = (board_height - 1) * (board_width - 1)
     n_cams = len(cam_names)
@@ -99,9 +81,18 @@ def test_get_metadata(minimal_session, tmp_path):
         loaded_reprojections = f["reprojected_corners"][:]
 
     assert np.all(loaded_frames == frames)
-    assert np.all(loaded_detections == detections)
-    assert np.all(loaded_triangulations == triangulations)
-    assert np.all(loaded_reprojections == reprojections)
+    assert np.all(
+        loaded_detections[~np.isnan(loaded_detections)]
+        == detections[~np.isnan(detections)]
+    )
+    assert np.all(
+        loaded_triangulations[~np.isnan(loaded_triangulations)]
+        == triangulations[~np.isnan(triangulations)]
+    )
+    assert np.all(
+        loaded_reprojections[~np.isnan(loaded_reprojections)]
+        == reprojections[~np.isnan(reprojections)]
+    )
 
 
 def test_read_board(minimal_session):

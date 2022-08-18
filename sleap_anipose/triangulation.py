@@ -17,8 +17,8 @@ def load_view(view: str) -> np.ndarray:
     Returns:
         A (n_frames, n_tracks, n_nodes, 2) shape ndarray of the 2D points.
     """
-    slp_file = list(Path(view).glob("*.proofread.slp"))[0].as_posix()
-    track = sleap.load_file(slp_file, detect_videos=False).numpy()
+    slp_file = list(Path(view).glob("*proofread.slp"))[0].as_posix()
+    track = sleap.load_file(slp_file, detect_videos=True).numpy()
     return track
 
 
@@ -151,7 +151,7 @@ def reproject(
     n_frames, n_tracks, n_nodes, _ = points.shape
     cams = cgroup.get_names()
 
-    reprojections = cgroup.projection_points(p3d.reshape((-1, 3))).reshape(
+    reprojections = cgroup.project(p3d.reshape((-1, 3))).reshape(
         (len(cams), n_frames, n_tracks, n_nodes, 2)
     )
 

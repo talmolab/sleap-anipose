@@ -307,6 +307,7 @@ def calibrate(
     session: str,
     board: Union[str, CharucoBoard, Dict],
     save_calib: bool = False,
+    save_folder: str = ".",
     save_metadata: bool = False,
     histogram: bool = False,
     reproj_imgs: bool = False,
@@ -328,7 +329,8 @@ def calibrate(
                 'marker_bits': Number of bits encoded in the marker images.
                 'dict_size': Size of the dictionary used for marker encoding.
         save_calib: Flag determining whether to save the calibration to the
-            session.
+            session. File saved as save_folder / calibration.toml.
+        save_folder: Path to save the calibration. Assumed to be the working directory.
         save_metadata: Flag determining whether to save the calibration metadata
             to the session.
         histogram: Flag determining whether or not to generate a histogram of
@@ -389,7 +391,7 @@ def calibrate(
         make_reproj_imgs(detections, reprojections, frames, session, save_reproj_imgs)
 
     if save_calib:
-        cgroup.dump((Path(session) / "calibration.toml").as_posix())
+        cgroup.dump((Path(save_folder) / "calibration.toml").as_posix())
 
     metadata = (frames, detections, triangulations, reprojections)
     return (cgroup, metadata)
