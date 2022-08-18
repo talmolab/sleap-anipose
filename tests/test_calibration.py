@@ -3,14 +3,14 @@
 import numpy as np
 from sleap_anipose.calibration import *
 from pathlib import Path
-from aniposelib import CameraGroup
+from aniposelib.cameras import CameraGroup
 import h5py
 import toml
 
 
 def test_calibrate(minimal_session, tmp_path):
     cam_names = [x.name for x in Path(minimal_session).iterdir() if x.is_dir()]
-    save_calib = (Path(minimal_session) / "calibration.toml").exists()
+    save_calib = ~(Path(minimal_session) / "calibration.toml").exists()
     board = read_board((Path(minimal_session) / "board.toml").as_posix())
     cgroup, _ = calibrate(minimal_session, board, save_calib)
 
@@ -63,7 +63,7 @@ def test_get_metadata(minimal_session, tmp_path):
     board = read_board((Path(minimal_session) / "board.toml").as_posix())
     corner_data, _ = cgroup.calibrate_videos(board_vids, board, verbose=False)
 
-    save = (Path(minimal_session) / "calibration_metadata.h5").exists()
+    save = ~(Path(minimal_session) / "calibration_metadata.h5").exists()
 
     # Testing saving functionality.
     if save:
@@ -110,8 +110,8 @@ def test_read_board(minimal_session):
     board = read_board(board_path.as_posix())
     file_dict = toml.load(board_path)
 
-    assert board.get_size() == (file_dict["board_width"], file_dict["board_width"])
-    assert board.get_square_length == file_dict["square_length"]
+    assert board.get_size() == (file_dict["board_width"], file_dict["board_height"])
+    assert board.get_square_length() == file_dict["square_length"]
 
 
 def test_write_board(tmp_path):

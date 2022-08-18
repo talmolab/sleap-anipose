@@ -230,14 +230,18 @@ def make_calibration_videos(session: str):
     """Generate movies from calibration board images.
 
     Args:
-        session: Path pointing to the session to calibrate.
+        session: Path pointing to the session with the .
     """
     cams = [x for x in Path(session).iterdir() if x.is_dir()]
 
     for cam in cams:
-        fname = f"calibration_images/{session.name}-{cam.name}-calibration.MOV"
-        writer = imageio.get_writer(cam / fname, fp3=30)
+        fname = (
+            cam
+            / "calibration_images"
+            / f"{Path(session).name}-{cam.name}-calibration.MOV"
+        )
         calibration_imgs = list(cam.glob("*/*.jpg"))
+        writer = imageio.get_writer(fname, fps=30)
 
         for img in calibration_imgs:
             writer.append_data(imageio.imread(img))
