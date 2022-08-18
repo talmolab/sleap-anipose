@@ -1,0 +1,6 @@
+board_width = 8
+board_height = 11
+square_length = 24.0
+marker_length = 18.75
+marker_bits = 4
+dict_size = 1000

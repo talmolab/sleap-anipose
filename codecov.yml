@@ -1,0 +1,12 @@
+coverage:
+  status:
+    project: # Measures overall project coverage.
+      default:
+        target: auto
+        threshold: 0.05%
+        informational: true # Project coverage for stats only.
+    patch: #  Only measures lines adjusted in the pull request.
+      default:
+        target: auto
+        threshold: 0.05%
+        informational: true # Patch coverage for stats only.
