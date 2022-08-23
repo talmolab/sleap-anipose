@@ -140,6 +140,7 @@ def triangulate_cli(
     session: str = ".",
     disp_progress: bool = False,
 ) -> np.ndarray:
+    """Triangulate points from the CLI."""
     return triangulate(p2d, calib, save, session, disp_progress)
 
 
@@ -218,4 +219,5 @@ def reproject_cli(
     save: bool = False,
     session: str = ".",
 ) -> np.ndarray:
+    """Reproject 3D points to different camera views from the CLI."""
     return reproject(p3d, calib, save, session)

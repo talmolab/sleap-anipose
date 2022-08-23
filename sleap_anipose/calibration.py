@@ -255,6 +255,7 @@ def make_calibration_videos(session: str):
     "--session", help="Path pointing to the session with the calibration board images."
 )
 def make_calibration_videos_cli(session: str):
+    """Generate movies from calibration board images from the CLI."""
     make_calibration_videos(session)
 
 
@@ -282,6 +283,7 @@ def read_board(board_file: str):
 @click.command()
 @click.option("--board_file", help="Path to the calibration board toml file.")
 def read_board_cli(board_file: str):
+    """Read toml file detailing the calibration board from the CLI."""
     return read_board(board_file)
 
 
@@ -337,6 +339,7 @@ def write_board_cli(
     marker_bits: int,
     dict_size: int,
 ):
+    """Write a calibration board .toml file from the CLI."""
     write_board(
         fname,
         board_width,
@@ -491,6 +494,7 @@ def calibrate_cli(
     save_hist: bool = False,
     save_reproj_imgs: bool = False,
 ) -> Tuple[CameraGroup, np.ndarray, np.ndarray, np.ndarray]:
+    """Calibrate a session from the CLI."""
     return calibrate(
         session,
         board,
