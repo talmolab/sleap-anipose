@@ -6,6 +6,7 @@ import sleap
 from pathlib import Path
 from aniposelib.cameras import CameraGroup
 from typing import Union
+import click
 
 
 def load_view(view: str) -> np.ndarray:
@@ -37,6 +38,25 @@ def load_tracks(session: str) -> np.ndarray:
     return tracks
 
 
+@click.command()
+@click.option(
+    "--p2d",
+    help="Path pointing to the session directory containing the SLEAP track files.",
+)
+@click.option("--calib", help="Path pointing to the calibration.toml file.")
+@click.option(
+    "--save",
+    default=False,
+    help="Flag determining whether or not to save triangulation results.",
+)
+@click.option(
+    "--session", default=".", help="Path to save the triangulation results to."
+)
+@click.option(
+    "--disp_progress",
+    default=False,
+    help="Flag determining whether or not to display triangulation progress.",
+)
 def triangulate(
     p2d: Union[np.ndarray, str],
     calib: Union[CameraGroup, str],
@@ -113,6 +133,15 @@ def triangulate(
     return points_3d
 
 
+@click.command()
+@click.option("--p3d", help="Path pointing to the points_3d.h5 file.")
+@click.option("--calib", help="Path pointing to the calibration.toml file.")
+@click.option(
+    "--save",
+    default=False,
+    help="Flag determining whether or not to save the reprojections.",
+)
+@click.option("--session", default=".", help="Path to save the reprojections to.")
 def reproject(
     p3d: Union[np.ndarray, str],
     calib: Union[CameraGroup, str],
