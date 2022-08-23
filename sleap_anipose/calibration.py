@@ -1,5 +1,6 @@
 """This module defines utilities related to calibration."""
 
+from pydoc import cli
 import numpy as np
 import matplotlib.pyplot as plt
 from aniposelib.boards import CharucoBoard
@@ -10,6 +11,7 @@ from typing import Tuple, List, Dict, Union
 import imageio
 from random import sample
 import toml
+import click
 
 
 def make_histogram(
@@ -226,11 +228,15 @@ def get_metadata(
     return metadata
 
 
+@click.command()
+@click.option(
+    "--session", help="Path pointing to the session with the calibration board images."
+)
 def make_calibration_videos(session: str):
     """Generate movies from calibration board images.
 
     Args:
-        session: Path pointing to the session with the .
+        session: Path pointing to the session with the calibration board images.
     """
     cams = [x for x in Path(session).iterdir() if x.is_dir()]
 
@@ -249,6 +255,8 @@ def make_calibration_videos(session: str):
         writer.close()
 
 
+@click.command()
+@click.option("--board_file", help="Path to the calibration board toml file.")
 def read_board(board_file: str):
     """Read toml file detailing calibration board.
 
@@ -270,6 +278,16 @@ def read_board(board_file: str):
     return board
 
 
+@click.command()
+@click.option("--fname", help="File name to save the board to, must end in .toml.")
+@click.option("--board_width", help="Number of squares along the width of the board.")
+@click.option("--board_height", help="Number of squares along the height of the board.")
+@click.option("--square_length", help="Length of square edge in any units.")
+@click.option(
+    "--marker_length", help="Length of marker edge in same units as square length."
+)
+@click.option("--marker_bits", help="Number of bits encoded in the marker images.")
+@click.option("--dict_size", help="Size of dictionary used for marking encoding.")
 def write_board(
     fname: str,
     board_width: int,
@@ -303,6 +321,44 @@ def write_board(
         toml.dump(board_dict, f)
 
 
+@click.command()
+@click.option("--session", help="Path pointing to the session to calibrate.")
+@click.option("--board", help="Path pointing to the board.toml file.")
+@click.option(
+    "--save_calib",
+    default=False,
+    help="Flag determinig whether or not to save the calibration results.",
+)
+@click.option(
+    "--save_folder",
+    default=".",
+    help="Path to save the calibration and calibration metadata to. Assumed to be the working directory.",
+)
+@click.option(
+    "--save_metadata",
+    default=False,
+    help="Flag determining whether or not to save the calibration metadata.",
+)
+@click.option(
+    "--histogram",
+    default=False,
+    help="Flag determining whether or not to generate a histogram of the reprojection errors.",
+)
+@click.option(
+    "--reproj_imgs",
+    default=False,
+    help="Flag determining whether or not to generate overlaid images of the detected corners and reprojected corners.",
+)
+@click.option(
+    "--save_hist",
+    default=False,
+    help="Flag determining whether or not to save the generated histogram.",
+)
+@click.option(
+    "--save_reproj_imgs",
+    default=False,
+    help="Flag determining whether or not to save the reprojection images.",
+)
 def calibrate(
     session: str,
     board: Union[str, CharucoBoard, Dict],
@@ -330,7 +386,7 @@ def calibrate(
                 'dict_size': Size of the dictionary used for marker encoding.
         save_calib: Flag determining whether to save the calibration to the
             session. File saved as save_folder / calibration.toml.
-        save_folder: Path to save the calibration. Assumed to be the working directory.
+        save_folder: Path to save the calibration and calibration_metadata to. Assumed to be the working directory.
         save_metadata: Flag determining whether to save the calibration metadata
             to the session.
         histogram: Flag determining whether or not to generate a histogram of
@@ -381,7 +437,7 @@ def calibrate(
 
     _, corners = cgroup.calibrate_videos(board_vids, calib_board)
     frames, detections, triangulations, reprojections = get_metadata(
-        corners, cgroup, save_metadata, session
+        corners, cgroup, save_metadata, save_folder
     )
 
     if histogram:
