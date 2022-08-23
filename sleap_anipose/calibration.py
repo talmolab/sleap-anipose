@@ -1,6 +1,5 @@
 """This module defines utilities related to calibration."""
 
-from pydoc import cli
 import numpy as np
 import matplotlib.pyplot as plt
 from aniposelib.boards import CharucoBoard
@@ -228,10 +227,6 @@ def get_metadata(
     return metadata
 
 
-@click.command()
-@click.option(
-    "--session", help="Path pointing to the session with the calibration board images."
-)
 def make_calibration_videos(session: str):
     """Generate movies from calibration board images.
 
@@ -256,7 +251,13 @@ def make_calibration_videos(session: str):
 
 
 @click.command()
-@click.option("--board_file", help="Path to the calibration board toml file.")
+@click.option(
+    "--session", help="Path pointing to the session with the calibration board images."
+)
+def make_calibration_videos_cli(session: str):
+    make_calibration_videos(session)
+
+
 def read_board(board_file: str):
     """Read toml file detailing calibration board.
 
@@ -279,15 +280,11 @@ def read_board(board_file: str):
 
 
 @click.command()
-@click.option("--fname", help="File name to save the board to, must end in .toml.")
-@click.option("--board_width", help="Number of squares along the width of the board.")
-@click.option("--board_height", help="Number of squares along the height of the board.")
-@click.option("--square_length", help="Length of square edge in any units.")
-@click.option(
-    "--marker_length", help="Length of marker edge in same units as square length."
-)
-@click.option("--marker_bits", help="Number of bits encoded in the marker images.")
-@click.option("--dict_size", help="Size of dictionary used for marking encoding.")
+@click.option("--board_file", help="Path to the calibration board toml file.")
+def read_board_cli(board_file: str):
+    return read_board(board_file)
+
+
 def write_board(
     fname: str,
     board_width: int,
@@ -322,43 +319,35 @@ def write_board(
 
 
 @click.command()
-@click.option("--session", help="Path pointing to the session to calibrate.")
-@click.option("--board", help="Path pointing to the board.toml file.")
+@click.option("--fname", help="File name to save the board to, must end in .toml.")
+@click.option("--board_width", help="Number of squares along the width of the board.")
+@click.option("--board_height", help="Number of squares along the height of the board.")
+@click.option("--square_length", help="Length of square edge in any units.")
 @click.option(
-    "--save_calib",
-    default=False,
-    help="Flag determinig whether or not to save the calibration results.",
+    "--marker_length", help="Length of marker edge in same units as square length."
 )
-@click.option(
-    "--save_folder",
-    default=".",
-    help="Path to save the calibration and calibration metadata to. Assumed to be the working directory.",
-)
-@click.option(
-    "--save_metadata",
-    default=False,
-    help="Flag determining whether or not to save the calibration metadata.",
-)
-@click.option(
-    "--histogram",
-    default=False,
-    help="Flag determining whether or not to generate a histogram of the reprojection errors.",
-)
-@click.option(
-    "--reproj_imgs",
-    default=False,
-    help="Flag determining whether or not to generate overlaid images of the detected corners and reprojected corners.",
-)
-@click.option(
-    "--save_hist",
-    default=False,
-    help="Flag determining whether or not to save the generated histogram.",
-)
-@click.option(
-    "--save_reproj_imgs",
-    default=False,
-    help="Flag determining whether or not to save the reprojection images.",
-)
+@click.option("--marker_bits", help="Number of bits encoded in the marker images.")
+@click.option("--dict_size", help="Size of dictionary used for marking encoding.")
+def write_board_cli(
+    fname: str,
+    board_width: int,
+    board_height: int,
+    square_length: float,
+    marker_length: float,
+    marker_bits: int,
+    dict_size: int,
+):
+    write_board(
+        fname,
+        board_width,
+        board_height,
+        square_length,
+        marker_length,
+        marker_bits,
+        dict_size,
+    )
+
+
 def calibrate(
     session: str,
     board: Union[str, CharucoBoard, Dict],
@@ -451,3 +440,65 @@ def calibrate(
 
     metadata = (frames, detections, triangulations, reprojections)
     return (cgroup, metadata)
+
+
+@click.command()
+@click.option("--session", help="Path pointing to the session to calibrate.")
+@click.option("--board", help="Path pointing to the board.toml file.")
+@click.option(
+    "--save_calib",
+    default=False,
+    help="Flag determinig whether or not to save the calibration results.",
+)
+@click.option(
+    "--save_folder",
+    default=".",
+    help="Path to save the calibration and calibration metadata to. Assumed to be the working directory.",
+)
+@click.option(
+    "--save_metadata",
+    default=False,
+    help="Flag determining whether or not to save the calibration metadata.",
+)
+@click.option(
+    "--histogram",
+    default=False,
+    help="Flag determining whether or not to generate a histogram of the reprojection errors.",
+)
+@click.option(
+    "--reproj_imgs",
+    default=False,
+    help="Flag determining whether or not to generate overlaid images of the detected corners and reprojected corners.",
+)
+@click.option(
+    "--save_hist",
+    default=False,
+    help="Flag determining whether or not to save the generated histogram.",
+)
+@click.option(
+    "--save_reproj_imgs",
+    default=False,
+    help="Flag determining whether or not to save the reprojection images.",
+)
+def calibrate_cli(
+    session: str,
+    board: str,
+    save_calib: bool = False,
+    save_folder: str = ".",
+    save_metadata: bool = False,
+    histogram: bool = False,
+    reproj_imgs: bool = False,
+    save_hist: bool = False,
+    save_reproj_imgs: bool = False,
+) -> Tuple[CameraGroup, np.ndarray, np.ndarray, np.ndarray]:
+    return calibrate(
+        session,
+        board,
+        save_calib,
+        save_folder,
+        save_metadata,
+        histogram,
+        reproj_imgs,
+        save_hist,
+        save_reproj_imgs,
+    )
