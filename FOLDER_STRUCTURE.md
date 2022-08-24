@@ -53,14 +53,13 @@ Certain files and folders in the example shown above follow a certain naming pat
 
 - View directories are named are the camera views they represent. 
 
-- The video found in each view folder is named following the convention: {view}-{session}-{suffix}.mp4. The '0000_h265_CRF14_denoised' suffix found in the benchmark dataset is a result of the video rendering software.
+- The video found in each view folder is named following the convention: `{view}-{session}-{suffix}.mp4`. The '0000_h265_CRF14_denoised' suffix found in the benchmark dataset is a result of the video rendering software.
 
-- The slp files are named following the convention: {view}-{session}.predictions.{prediction_suffix}.slp. If the file contains the proofread tracks, the .proofread suffix is added to the file name. 
+- The slp files are named following the convention: `{view}-{session}.predictions.{prediction_suffix}.slp`. If the file contains the proofread tracks, the .proofread suffix is added to the file name. 
 
-- The images of the reprojected corners and detected corners overlaid on the calibration board are named according to the convention: board_reprojection-{frame_number}.png. The frame number is derived from the 
+- The images of the reprojected corners and detected corners overlaid on the calibration board are named according to the convention: `board_reprojection-{frame_number}.png`. The frame number is derived from the 
 frame of the calibration board used. 
 
-- The rendered movies of the calibration images are named following the convention: {view}-{session}-calibration.MOV.
+- The rendered movies of the calibration images are named following the convention: `{view}-{session}-calibration.MOV`.
 
-- The calibration images are labeled according to the convention: {view}-{session}-{frame_number}.jpg. 
-
+- The calibration images are labeled according to the convention: `{view}-{session}-{frame_number}.jpg`. 
