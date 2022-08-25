@@ -378,7 +378,8 @@ def calibrate(
                 'dict_size': Size of the dictionary used for marker encoding.
         save_calib: Flag determining whether to save the calibration to the
             session. File saved as save_folder / calibration.toml.
-        save_folder: Path to save the calibration and calibration_metadata to. Assumed to be the working directory.
+        save_folder: Path to save the calibration and calibration_metadata to. Assumed
+            to be the working directory.
         save_metadata: Flag determining whether to save the calibration metadata
             to the session.
         histogram: Flag determining whether or not to generate a histogram of
