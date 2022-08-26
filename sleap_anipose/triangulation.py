@@ -2,7 +2,6 @@
 
 import numpy as np
 import h5py
-import sleap
 from pathlib import Path
 from aniposelib.cameras import CameraGroup
 from typing import Union
@@ -18,8 +17,9 @@ def load_view(view: str) -> np.ndarray:
     Returns:
         A (n_frames, n_tracks, n_nodes, 2) shape ndarray of the 2D points.
     """
-    slp_file = list(Path(view).glob("*proofread.slp"))[0].as_posix()
-    track = sleap.load_file(slp_file, detect_videos=True).numpy()
+    h5_file = list(Path(view).glob("*analysis.h5"))[0].as_posix()
+    with h5py.File(h5_file, "r") as f:
+        track = f["tracks"][:].transpose((-1, 0, -2, 1))
     return track
 
 
