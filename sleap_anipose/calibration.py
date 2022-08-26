@@ -351,6 +351,16 @@ def write_board_cli(
     )
 
 
+def draw_board():
+    pass
+
+
+@click.command()
+@click.option()
+def draw_board_cli():
+    pass
+
+
 def calibrate(
     session: str,
     board: Union[str, CharucoBoard, Dict],
