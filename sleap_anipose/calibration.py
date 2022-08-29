@@ -11,6 +11,7 @@ import imageio
 from random import sample
 import toml
 import click
+import cv2
 
 
 def make_histogram(
@@ -351,14 +352,72 @@ def write_board_cli(
     )
 
 
-def draw_board():
-    pass
+def draw_board(
+    save_folder: str,
+    board_X: int,
+    board_Y: int,
+    square_length: float,
+    marker_length: float,
+    marker_bits: int = 4,
+    dict_size: int = 1000,
+):
+    """Draw and save a printable calibration board jpg file.
+
+    Args:
+        save_folder: Path to save the file to.
+        board_X: Number of squares along the width of the board.
+        board_Y: Number of squares along with height of the board.
+        square_length: Length of square edges in meters.
+        marker_length: Length of marker edges in meters.
+        marker_bits: Number of bits in aruco markers, default 4.
+        dict_size: Size of dictionary for encoding aruco markers, default 1000.
+    """
+    # Add more options for aruco dictionaries later.
+    if marker_bits == 4:
+        if dict_size == 1000:
+            aruco_dict = cv2.aruco.Dictionary_get(cv2.aruco.DICT_4X4_1000)
+    else:
+        aruco_dict = cv2.aruco.Dictionary_get(cv2.aruco.DICT_4X4_1000)
+
+    charuco_board = cv2.aruco.CharucoBoard_create(
+        board_X, board_Y, square_length, marker_length, aruco_dict
+    )
+    imboard = charuco_board.draw((1080, 1080))
+    cv2.imwrite(Path(save_folder) / "calibration_board.jpg", imboard)
 
 
 @click.command()
-@click.option()
-def draw_board_cli():
-    pass
+@click.option("--save_folder", help="Path to save the file to.")
+@click.option("--board_X", help="Number of squares along the width of the board.")
+@click.option("--board_Y", help="Number of squares along the height of the board.")
+@click.option("--square_length", help="Length of square edges in meters.")
+@click.option("--marker_length", help="Length of marker edges in meters.")
+@click.option(
+    "--marker_bits", default=4, help="Number of bits in aruco markers, default 4."
+)
+@click.option(
+    "--dict_size",
+    default=1000,
+    help="Size of dictionary for encoding aruco markers, default 1000.",
+)
+def draw_board_cli(
+    save_folder: str,
+    board_X: int,
+    board_Y: int,
+    square_length: float,
+    marker_length: float,
+    marker_bits: int = 4,
+    dict_size: int = 1000,
+):
+    draw_board(
+        save_folder,
+        board_X,
+        board_Y,
+        square_length,
+        marker_length,
+        marker_bits,
+        dict_size,
+    )
 
 
 def calibrate(
