@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/talmolab/sleap-anipose/actions/workflows/ci.yml/badge.svg)](https://github.com/talmolab/sleap-anipose/actions/workflows/ci.yml)
 [![Lint](https://github.com/talmolab/sleap-anipose/actions/workflows/lint.yml/badge.svg)](https://github.com/talmolab/sleap-anipose/actions/workflows/lint.yml)
-<!-- [![codecov](https://codecov.io/gh/talmolab/sleap-anipose/branch/main/graph/badge.svg?token=Sj8kIFl3pi)](https://codecov.io/gh/talmolab/sleap-anipose) -->
+[![codecov](https://codecov.io/gh/talmolab/sleap-anipose/branch/main/graph/badge.svg)](https://codecov.io/gh/talmolab/sleap-anipose)
 
 SLEAP to Anipose triangulation pipeline for 3D multi-animal pose tracking.
 
@@ -52,11 +52,11 @@ slap-write_board --fname board.toml --board_width 8 --board_height 11 --square_l
 slap-draw_board --fname board.pdf --board board.toml 
 ```
 
-4. Calibrate your camera setup by displaying the calibration board to all cameras. Make sure to do this before running any experiments. See [`CALIBRATION_GUIDE.md`](CALIBRATION_GUIDE.md) for more information.
+4. Calibrate your camera setup by displaying the calibration board to all cameras. Make sure to do this before running any experiments. See [`CALIBRATION_GUIDE.md`](docs/CALIBRATION_GUIDE.md) for more information.
 
-5. Track your data using SLEAP. Make sure that animal tracks are matching across multiple views. See [`SLEAP_GUIDE.md`](SLEAP_GUIDE.md) for more information.
+5. Track your data using SLEAP. Make sure that animal tracks are matching across multiple views. See [`SLEAP_GUIDE.md`](docs/SLEAP_GUIDE.md) for more information.
 
-6. Set up your data according to [`FOLDER_STRUCTURE.md`](FOLDER_STRUCTURE.md).
+6. Set up your data according to [`FOLDER_STRUCTURE.md`](docs/FOLDER_STRUCTURE.md).
 
 7. Generate the calibration for your cameras:
 ```
@@ -79,4 +79,4 @@ slap.calibrate(session, *calibration_args)
 slap.triangulate(session, *triangulation_args)
 ```
 
-See [`FOLDER_STRUCTURE.md`](FOLDER_STRUCTURE.md) for details on how session data should be organized.
+See [`FOLDER_STRUCTURE.md`](docs/FOLDER_STRUCTURE.md) for details on how session data should be organized.

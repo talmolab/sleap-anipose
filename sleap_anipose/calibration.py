@@ -5,9 +5,9 @@ import matplotlib.pyplot as plt
 from aniposelib.boards import CharucoBoard
 from aniposelib.cameras import CameraGroup
 import h5py
+import imageio
 from pathlib import Path
 from typing import Tuple, List, Dict, Union
-import imageio
 from random import sample
 import toml
 import click
@@ -409,6 +409,7 @@ def draw_board_cli(
     marker_bits: int = 4,
     dict_size: int = 1000,
 ):
+    """Draw and save a printable calibration board jpg file from the CLI."""
     draw_board(
         save_folder,
         board_X,
