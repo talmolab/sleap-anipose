@@ -8,20 +8,22 @@ import h5py
 
 
 def test_triangulate(minimal_session, tmp_path):
-    assert (Path(minimal_session) / "calibration.toml").exists()
-    cgroup = CameraGroup.load(Path(minimal_session) / "calibration.toml")
+    calibration = Path(minimal_session) / "calibration.toml"
+    assert calibration.exists()
+
     tmp_p3d = tmp_path / "p3d"
     tmp_p3d.mkdir()
-    p3d = triangulate(minimal_session, cgroup, save=True, session=tmp_p3d)
-    load_path = tmp_p3d / "points3d.h5"
+    fname = tmp_p3d / "points3d.h5"
+
+    p3d = triangulate(minimal_session, calibration, fname)
 
     # Testing shape of the output matrices.
     _, n_frames, n_tracks, n_nodes, _ = load_tracks(minimal_session).shape
     assert p3d.shape == (n_frames, n_tracks, n_nodes, 3)
 
     # Testing saving functionality.
-    assert load_path.exists()
-    with h5py.File(load_path, "r") as f:
+    assert fname.exists()
+    with h5py.File(fname, "r") as f:
         loaded_p3d = f["tracks"][:]
     assert np.all(loaded_p3d == p3d)
 

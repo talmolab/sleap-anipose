@@ -9,7 +9,7 @@ To model the spatial relationships of cameras and their internal specifications,
 
 A calibration board is a rectangular surface with a recognizable pattern that allows for quick detection via modern computer vision software. The most commonly used types of boards are checkerboards, aruco boards (which are rectangular grids with unique markers), and charuco boards (which are a combination of the two). 
 
-**INSERT IMAGE HERE**
+<!-- TODO: Insert screenshot of example board --> 
 
 Calibration boards are commonly made by pasting a printed board design onto a rigid surface, however, they can also be produced via laser cutting into acryllic or other methods. Regardless of the method, it is paramount that the board design is clearly visible to the cameras. 
 
@@ -18,19 +18,18 @@ One can create a charuco board pattern via two different ways using sleap-anipos
 1. Through the CLI
 
 ```
-slap-write_board --board_name board --img_format jpg --board_X 8 --board_Y 11 --square_length 24.0 --marker_length --18.75
+slap-draw_board --board_name my/path/board.jpg --board_X 8 --board_Y 11 --square_length 24.0 --marker_length --18.75 --img_width 1440 --img_height 1440 --save my/path/board.toml
 ```
 
 2. Through the API
 
-```
-python 
+```python 
 
 import sleap-anipose as slap 
-slap.calibration.write_board("path/board", 'jpg', 8, 11, 24.0, 18.75)
+slap.calibration.draw_board("my/path/board.jpg", 8, 11, 24.0, 18.75, 1440, 1440, "my/path/board.toml")
 ```
 
-Currently, we only support charuco board calibration, but plan to expand to checkerboards and aruco boards. It is also important to note that we currently only generate aruco markers with 4 bits from a size 1000 dictionary. However, if one used a calibration board with a different aruco encoding the board can still be used for calibration and triangulation using sleap-anipose. One could do so by writing a toml file that describes the board according to the attributes in the write_board function. Refer to the [`API`](sleap_anipose/calibration.py) for more details. 
+Currently, we only support charuco board calibration, but plan to expand to checkerboards and aruco boards. It is also important to note that we currently only generate aruco markers with 4 bits from a size 1000 dictionary. However, if one used a calibration board with a different aruco encoding the board can still be used for calibration and triangulation using sleap-anipose. One could do so by writing a toml file that describes the board according to the attributes in the write_board function. Refer to the [API](sleap_anipose/calibration.py) for more details. 
 
 ## Camera Setup  
 
@@ -38,21 +37,21 @@ In order to get the best calibration and triangulation possible, it is useful to
 
 1. Avoid having the cameras obfuscate each other. 
 
-**INCLUDE IMAGE HERE**
+<!-- TODO: Insert screenshot of obscured camera setup -->
 
 2. Avoid placing the cameras in positions that lead to animal easily occluding one another. 
 
-**INCLUDE IMAGE HERE**
+<!-- TODO: Insert screenshot of obscured animal setup -->
 
 3. Avoid placing the cameras in positions that fail to capture the full 3D features of the animal.
 
-**INCLUDE IMAGE HERE**
+<!-- TODO: Insert screenshot of bad camera positioning relative to animal -->
 
 4. Make sure that there is enough space alotted in the experimental space for the cameras to capture videos of the calibration board at various angles and at a reasonable resolution. 
 
-**INCLUDE IMAGE HERE**
+<!-- TODO: Insert screenshot of an undersized experimental setup -->
 
-Last but not least, it is vital to have the cameras synchronized when recording. This can be achieved with a hardware controller (such as a Rasberry Pi) and a pulse emitter. The synchronized videos must then be saved by an appropriate acquisition software and compressed if necessary. For the benchmark dataset, the camera setup consisted of 5 (4 for some sessions) FLIR Blackfly S Mono cameras, each with ThorLabs fixed focal length 3.5 or 4.5 mm lenses (MVL4WA/ 5WA). Cameras were triggered with a strobe pulse from a tdt rx8. Data was acquired with spinview software and then compressed with ffmpeg.
+Last but not least, it is vital to have the cameras synchronized when recording. This can be achieved with a hardware controller (such as a Rasberry Pi) and a pulse emitter. The synchronized videos must then be saved by an appropriate acquisition software and compressed if necessary. For the benchmark dataset, the camera setup consisted of 5 (4 for some sessions) FLIR Blackfly S Mono cameras, each with ThorLabs fixed focal length 3.5 or 4.5 mm lenses (MVL4WA/ 5WA). Cameras were triggered with a strobe pulse from a tdt rx8. Data was acquired with spinview software and then compressed with ffmpeg. 
 
 ## Calibration Workflow 
 
@@ -70,4 +69,20 @@ Calibration should be carried out each time before the start of a recording sess
 
 6. Check the videos for proper synchronization and visibility, troubleshoot if necessary. 
 
-Alternatively, instead of taking videos for board calibration, one could take synchronized images from each view and then use sleap-anipose to stitch the frames into a movie. Refer to the [`API`](sleap_anipose/calibration.py) for more details. 
+Alternatively, instead of taking videos for board calibration, one could take synchronized images from each view and then use sleap-anipose to stitch the frames into a movie. Refer to the [function documentation](sleap_anipose/calibration.py) for more details. 
+
+7. Organize the different videos into their proper view subfolders as explained in [FOLDER_STRUCTURE.md](sleap-anipose/docs/FOLDER_STRUCTURE.md).
+
+8. Run the calibration function from either the command line or a script.
+
+```
+slap-calibrate -- session my/path --board my/path/board.toml --fname my/path/calibration.toml --metadata_fname my/path/calibration.metadata.h5 --histogram_path my/path --reproj_path my/path
+```
+
+```python
+
+import sleap-anipose as slap 
+cgroup, metadata = slap.calibration.calibrate("my/path", "my/path/board.toml", "my/path/calibration.toml", "my/path/calibration.metadata.h5", "my/path", "my/path")
+```
+
+Refer to the [function documentation](sleap_anipose/calibration.py) and the [FOLDER_STRUCTURE.md](sleap_anipose/docs/FOLDER_STRUCTURE.md) for more details. 

@@ -12,13 +12,13 @@ from random import sample
 import toml
 import click
 import cv2
+from cv2 import aruco
 
 
 def make_histogram(
     detections: np.ndarray,
     reprojections: np.ndarray,
-    save: bool = False,
-    session: str = ".",
+    save_path: str = "",
 ):
     """Make a visualization histogram of the reprojection errors.
 
@@ -27,9 +27,7 @@ def make_histogram(
             detected corner positions for each camera view.
         reprojections: A (n_cams, n_frames, n_corners, 2) array containing the
             reprojected corner positions for each camera view.
-        save: A flag determining whether or not to save the histogram
-        session: The session directory to save the figure to, assumed to be
-            the current working directory if not specified.
+        session: The session directory to save the figure to. Will only save the figure if a non-empty string is entered.
     """
     reprojection_error = np.linalg.norm((detections - reprojections), axis=-1)
     fig = plt.figure(figsize=(8, 6), facecolor="w", dpi=120)
@@ -39,9 +37,11 @@ def make_histogram(
     plt.xlabel("Error (px)")
     plt.ylabel("PDF")
 
+    save = len(save_path) > 0
+
     if save:
         plt.savefig(
-            Path(session) / "reprojection_errors.png", format="png", dpi="figure"
+            Path(save_path) / "reprojection_errors.png", format="png", dpi="figure"
         )
 
 
@@ -49,9 +49,9 @@ def make_reproj_imgs(
     detections: np.ndarray,
     reprojections: np.ndarray,
     frames: List[int],
-    session: str = ".",
+    session: str,
     n_samples=4,
-    save: bool = False,
+    save_path: str = "",
 ):
     """Make visualization of calibrated board corners.
 
@@ -62,13 +62,10 @@ def make_reproj_imgs(
             reprojected corners.
         frames: A length n_frames list of the frames visible from each view.
             These frames are used for triangulation and saved in metadata.
-        n_samples: The number of images to make per view.
         session: Path containing the view subfolders with the calibration board
-            images. Images are saved to the view subfolders in this folder as
-            'session / view / reprojection-{frame}.jpg'. Assumed to be the
-            current working directory if not specified.
-        save: Flag determining whether or not to save images to the session.
-
+            images.
+        n_samples: The number of images to make per view.
+        save_path: The session to save the images to. If not specified as a non-empty string, images will nto be saved. Images are saved to the view subfolders in this folder as 'save_path / view / reprojection-{frame}.png'.
     """
     cam_folders = [x for x in Path(session).iterdir() if x.is_dir()]
     sampled_frames = sample(frames, n_samples)
@@ -100,16 +97,13 @@ def make_reproj_imgs(
             plt.yticks([])
             plt.legend()
 
-            if save:
+            if len(save_path) > 0:
                 fname = cam / f"reprojection-{frame}.png"
                 plt.savefig(fname, format="png", dpi="figure")
 
 
 def get_metadata(
-    corner_data: List[List[Dict]],
-    cgroup: CameraGroup,
-    save: bool = False,
-    session: str = ".",
+    corner_data: List[List[Dict]], cgroup: CameraGroup, save_path: str = ""
 ) -> Tuple[List[int], np.ndarray, np.ndarray, np.ndarray]:
     """Generate metadata for calibration.
 
@@ -125,11 +119,7 @@ def get_metadata(
                 'rvec': A rotation vector for the orientation of the image
                 'tvec': A translation vector for the orientation of the image
         cgroup: The object containing all the relevant camera parameters.
-        save: Flag determining whether to save the calibration metadata
-            to the session. Files will be saved as
-            'session / calibration_metadata.h5'.
-        session: Path to save the metadata to. Assumed to be the current
-            working directory if not specified.
+        save_path: The file path to save the metadata to. Will only save if a non-empty string is entered.
 
     Returns:
         common_frames: A length n_frames list of the indices of calibration
@@ -144,6 +134,8 @@ def get_metadata(
             corners reprojected into each view. Ordering of views same as
             the order found in the cgroup input. Saved under the
             'reprojected_corners' key in the metadata file.
+
+        If the option to save is selected, all these values are saved in hdf5 file.
     """
     frames_per_view = [
         [x[i]["framenum"][1] for i in range(len(x))] for x in corner_data
@@ -173,9 +165,9 @@ def get_metadata(
         (len(raw_detections), len(common_frames), -1, 2)
     )
 
-    if save:
+    if len(save_path) > 0:
         cam_names = cgroup.get_names()
-        with h5py.File(Path(session) / "calibration.metadata.h5", "w") as f:
+        with h5py.File(save_path, "w") as f:
             f.create_dataset(
                 "frames",
                 data=common_frames,
@@ -237,6 +229,8 @@ def make_calibration_videos(session: str):
     cams = [x for x in Path(session).iterdir() if x.is_dir()]
 
     for cam in cams:
+
+        # TODO: add different movie extension functionality
         fname = (
             cam
             / "calibration_images"
@@ -300,7 +294,7 @@ def write_board(
     """Write a toml file detailing a calibration board.
 
     Args:
-        fname: File name to save the board to, must end in .toml.
+        fname: File name to save the board as.
         board_width: Number of squares along the width of the board.
         board_height: Number of squares along the height of the board.
         square_length: Length of square edge in any measured units.
@@ -322,7 +316,7 @@ def write_board(
 
 
 @click.command()
-@click.option("--fname", help="File name to save the board to, must end in .toml.")
+@click.option("--fname", help="File name to save the board as.")
 @click.option("--board_width", help="Number of squares along the width of the board.")
 @click.option("--board_height", help="Number of squares along the height of the board.")
 @click.option("--square_length", help="Length of square edge in any units.")
@@ -353,52 +347,90 @@ def write_board_cli(
 
 
 def draw_board(
-    save_folder: str,
+    board_name: str,
     board_X: int,
     board_Y: int,
     square_length: float,
     marker_length: float,
-    marker_bits: int = 4,
-    dict_size: int = 1000,
+    marker_bits: int,
+    dict_size: int,
+    img_width: int,
+    img_height: int,
+    save: str = "",
 ):
     """Draw and save a printable calibration board jpg file.
 
     Args:
-        save_folder: Path to save the file to.
+        board_name: Path to save the file to.
         board_X: Number of squares along the width of the board.
         board_Y: Number of squares along with height of the board.
         square_length: Length of square edges in meters.
         marker_length: Length of marker edges in meters.
-        marker_bits: Number of bits in aruco markers, default 4.
-        dict_size: Size of dictionary for encoding aruco markers, default 1000.
+        marker_bits: Number of bits in aruco markers.
+        dict_size: Size of dictionary for encoding aruco markers.
+        img_width: Width of the drawn board in pixels.
+        img_height: Height of the drawn board in pixels.
+        save: Path to the save the parameters of the board to. Will only save if a non-empty string is given.
     """
-    # Add more options for aruco dictionaries later.
-    if marker_bits == 4:
-        if dict_size == 1000:
-            aruco_dict = cv2.aruco.Dictionary_get(cv2.aruco.DICT_4X4_1000)
-    else:
-        aruco_dict = cv2.aruco.Dictionary_get(cv2.aruco.DICT_4X4_1000)
 
-    charuco_board = cv2.aruco.CharucoBoard_create(
+    ARUCO_DICTS = {
+        (4, 50): aruco.DICT_4X4_50,
+        (5, 50): aruco.DICT_5X5_50,
+        (6, 50): aruco.DICT_6X6_50,
+        (7, 50): aruco.DICT_7X7_50,
+        (4, 100): aruco.DICT_4X4_100,
+        (5, 100): aruco.DICT_5X5_100,
+        (6, 100): aruco.DICT_6X6_100,
+        (7, 100): aruco.DICT_7X7_100,
+        (4, 250): aruco.DICT_4X4_250,
+        (5, 250): aruco.DICT_5X5_250,
+        (6, 250): aruco.DICT_6X6_250,
+        (7, 250): aruco.DICT_7X7_250,
+        (4, 1000): aruco.DICT_4X4_1000,
+        (5, 1000): aruco.DICT_5X5_1000,
+        (6, 1000): aruco.DICT_6X6_1000,
+        (7, 1000): aruco.DICT_7X7_1000,
+    }
+
+    if (marker_bits, dict_size) not in ARUCO_DICTS.keys():
+        raise Exception("Invalid marker bits or dictionary size.")
+    else:
+        aruco_dict = ARUCO_DICTS[(marker_bits, dict_size)]
+
+    charuco_board = aruco.CharucoBoard_create(
         board_X, board_Y, square_length, marker_length, aruco_dict
     )
-    imboard = charuco_board.draw((1080, 1080))
-    cv2.imwrite(Path(save_folder) / "calibration_board.jpg", imboard)
+
+    imboard = charuco_board.draw((img_width, img_height))
+    cv2.imwrite(board_name, imboard)
+
+    if len(save) > 0:
+        write_board(
+            save,
+            board_X,
+            board_Y,
+            square_length,
+            marker_length,
+            marker_bits,
+            dict_size,
+        )
 
 
 @click.command()
-@click.option("--save_folder", help="Path to save the file to.")
+@click.option("--board_name", help="Path to save the file to.")
 @click.option("--board_X", help="Number of squares along the width of the board.")
 @click.option("--board_Y", help="Number of squares along the height of the board.")
 @click.option("--square_length", help="Length of square edges in meters.")
 @click.option("--marker_length", help="Length of marker edges in meters.")
+@click.option("--marker_bits", help="Number of bits in aruco markers.")
+@click.option("--dict_size", help="Size of dictionary for encoding aruco markers.")
+@click.option("--img_width", help="Width of the drawn image in pixels.")
+@click.option("--img_height", help="Height of the drawn image in pixels.")
 @click.option(
-    "--marker_bits", default=4, help="Number of bits in aruco markers, default 4."
-)
-@click.option(
-    "--dict_size",
-    default=1000,
-    help="Size of dictionary for encoding aruco markers, default 1000.",
+    "--save",
+    show_default=True,
+    default="",
+    help="Path to the save the parameters of the board to. Will only save if a non-empty string is given.",
 )
 def draw_board_cli(
     save_folder: str,
@@ -406,8 +438,11 @@ def draw_board_cli(
     board_Y: int,
     square_length: float,
     marker_length: float,
-    marker_bits: int = 4,
-    dict_size: int = 1000,
+    marker_bits: int,
+    dict_size: int,
+    img_width: int,
+    img_height: int,
+    save: str = "",
 ):
     """Draw and save a printable calibration board jpg file from the CLI."""
     draw_board(
@@ -418,19 +453,19 @@ def draw_board_cli(
         marker_length,
         marker_bits,
         dict_size,
+        img_width,
+        img_height,
+        save,
     )
 
 
 def calibrate(
     session: str,
     board: Union[str, CharucoBoard, Dict],
-    save_calib: bool = False,
-    save_folder: str = ".",
-    save_metadata: bool = False,
-    histogram: bool = False,
-    reproj_imgs: bool = False,
-    save_hist: bool = False,
-    save_reproj_imgs: bool = False,
+    calib_fname: str = "",
+    metadata_fname: str = "",
+    histogram_path: str = "",
+    reproj_path: str = "",
 ) -> Tuple[CameraGroup, np.ndarray, np.ndarray, np.ndarray]:
     """Calibrate cameras for a given session.
 
@@ -446,20 +481,10 @@ def calibrate(
                     square length.
                 'marker_bits': Number of bits encoded in the marker images.
                 'dict_size': Size of the dictionary used for marker encoding.
-        save_calib: Flag determining whether to save the calibration to the
-            session. File saved as save_folder / calibration.toml.
-        save_folder: Path to save the calibration and calibration_metadata to. Assumed
-            to be the working directory.
-        save_metadata: Flag determining whether to save the calibration metadata
-            to the session.
-        histogram: Flag determining whether or not to generate a histogram of
-            the reprojection errors.
-        reproj_imgs: Flag determining whether or not to generate overlaid
-            images of the detected corners and reprojected corners.
-        save_hist: Flag determining whether or not to save the histogram of
-            reprojection errors.
-        save_reproj_imgs: Flag determining whether or not to save the
-            reprojection images.
+        calib_fname: File path to save the calibration to (must end in .toml). Will not save unless a non-empty string is given.
+        metadata_fname: File path to save the calibration metadata to (must end in .h5). Will not save unless a non-empty string is given.
+        histogram_path: Path pointing to the session to save the histogram of reprojection errors to. Will not save unless a non-empty string is given.
+        reproj_path: Path pointing to the session to save the board reprojection images to. Will not save unless a non-empty string is given.
 
     Returns:
         cgroup: A CameraGroup object containing all the camera parameters for
@@ -500,17 +525,15 @@ def calibrate(
 
     _, corners = cgroup.calibrate_videos(board_vids, calib_board)
     frames, detections, triangulations, reprojections = get_metadata(
-        corners, cgroup, save_metadata, save_folder
+        corners, cgroup, metadata_fname
     )
 
-    if histogram:
-        make_histogram(detections, reprojections, save_hist, session)
+    make_histogram(detections, reprojections, histogram_path)
 
-    if reproj_imgs:
-        make_reproj_imgs(detections, reprojections, frames, session, save_reproj_imgs)
+    make_reproj_imgs(detections, reprojections, frames, session, reproj_path)
 
-    if save_calib:
-        cgroup.dump((Path(save_folder) / "calibration.toml").as_posix())
+    if len(calib_fname > 0):
+        cgroup.dump(calib_fname)
 
     metadata = (frames, detections, triangulations, reprojections)
     return (cgroup, metadata)
@@ -520,60 +543,39 @@ def calibrate(
 @click.option("--session", help="Path pointing to the session to calibrate.")
 @click.option("--board", help="Path pointing to the board.toml file.")
 @click.option(
-    "--save_calib",
-    default=False,
-    help="Flag determinig whether or not to save the calibration results.",
+    "--calib_fname",
+    default="",
+    help="File path to save the calibration to. Will not save unles a non-empty string is given.",
 )
 @click.option(
-    "--save_folder",
-    default=".",
-    help="Path to save the calibration and calibration metadata to. Assumed to be the working directory.",
+    "--metadata_fname",
+    default=False,
+    help="File path to save the calibration metadata to. Will not save unles a non-empty string is given.",
 )
 @click.option(
-    "--save_metadata",
-    default=False,
-    help="Flag determining whether or not to save the calibration metadata.",
+    "--histogram_path",
+    default="",
+    help="Path pointing to the session to save the histogram of reprojection errors to. Will not save unless a non-empty string is given.",
 )
 @click.option(
-    "--histogram",
-    default=False,
-    help="Flag determining whether or not to generate a histogram of the reprojection errors.",
-)
-@click.option(
-    "--reproj_imgs",
-    default=False,
-    help="Flag determining whether or not to generate overlaid images of the detected corners and reprojected corners.",
-)
-@click.option(
-    "--save_hist",
-    default=False,
-    help="Flag determining whether or not to save the generated histogram.",
-)
-@click.option(
-    "--save_reproj_imgs",
-    default=False,
-    help="Flag determining whether or not to save the reprojection images.",
+    "--reproj_path",
+    default="",
+    help="Path pointing to the session to save the board reprojection images to. Will not save unless a non-empty string is given.",
 )
 def calibrate_cli(
     session: str,
     board: str,
-    save_calib: bool = False,
-    save_folder: str = ".",
-    save_metadata: bool = False,
-    histogram: bool = False,
-    reproj_imgs: bool = False,
-    save_hist: bool = False,
-    save_reproj_imgs: bool = False,
+    calib_fname: str = "",
+    metadata_fname: str = "",
+    histogram_path: str = "",
+    reproj_path: str = "",
 ) -> Tuple[CameraGroup, np.ndarray, np.ndarray, np.ndarray]:
     """Calibrate a session from the CLI."""
     return calibrate(
         session,
         board,
-        save_calib,
-        save_folder,
-        save_metadata,
-        histogram,
-        reproj_imgs,
-        save_hist,
-        save_reproj_imgs,
+        calib_fname,
+        metadata_fname,
+        histogram_path,
+        reproj_path,
     )

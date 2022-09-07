@@ -1,5 +1,7 @@
 # Folder structure
 
+# TODO: Update basic structure tree, build understanding from ground up 
+
 This package expects that your data has already been pose tracked and proofread with
 [SLEAP](https://sleap.ai), and organized according to the specifications below.
 
@@ -44,7 +46,7 @@ Project Root Directory
                 └── top-04182022182439-137.jpg
 ```
 
-The above structure corresponds to the benchmark dataset and may not be exactly one to one with the way your data was recorded. Even if there are conflicts, there are ways to approximate the benchmark structure so that sleap-anipose can run smoothly. The key aspect of the folder structure is the notion of a session. A session is a folder that contains videos for a singular continuous recording. **A session will only have 1 video per view.** 
+The above structure corresponds to the benchmark dataset and may not be exactly one to one with the way your data was recorded. Even if there are conflicts, there are ways to approximate the benchmark structure so that sleap-anipose can run smoothly. The key aspect of the folder structure is the notion of a session. A session is a folder that contains videos for a singular continuous recording. **A session will only have 1 video per view.**  The key to 
 
 
 

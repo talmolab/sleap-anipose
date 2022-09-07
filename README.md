@@ -43,7 +43,7 @@ conda activate sleap-anipose
 2. Generate a calibration board matching the details of the board presented before the cameras. 
 
 ```
-slap-write_board --fname board.toml --board_width 8 --board_height 11 --square_length 24.0 marker_length --18.5 --marker_bits 4 dict_size 1000
+slap-write_board --fname board.toml --board_width 8 --board_height 11 --square_length 24.0 --marker_length 18.5 --marker_bits 4 dict_size 1000
 ```
 
 3. If you do not have a calibration board already, you can have the calibration board drawn and saved to a pdf file from the file made in step 2. 
@@ -75,8 +75,10 @@ import sleap_anipose as slap
 
 session = "path/to/data"
 
-slap.calibrate(session, *calibration_args)
+slap.calibrate(session, *calibration_args) 
 slap.triangulate(session, *triangulation_args)
 ```
+
+# TODO: unpack function args and explain them. 
 
 See [`FOLDER_STRUCTURE.md`](docs/FOLDER_STRUCTURE.md) for details on how session data should be organized.
