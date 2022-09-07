@@ -79,6 +79,6 @@ slap.calibrate(session, *calibration_args)
 slap.triangulate(session, *triangulation_args)
 ```
 
-# TODO: unpack function args and explain them. 
+<!-- TODO: unpack function args and explain them. -->
 
 See [`FOLDER_STRUCTURE.md`](docs/FOLDER_STRUCTURE.md) for details on how session data should be organized.

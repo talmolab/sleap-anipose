@@ -27,7 +27,8 @@ def make_histogram(
             detected corner positions for each camera view.
         reprojections: A (n_cams, n_frames, n_corners, 2) array containing the
             reprojected corner positions for each camera view.
-        save_path: The session directory to save the figure to. Will only save the figure if a non-empty string is entered.
+        save_path: The session directory to save the figure to. Will only save the
+            figure if a non-empty string is entered.
     """
     reprojection_error = np.linalg.norm((detections - reprojections), axis=-1)
     fig = plt.figure(figsize=(8, 6), facecolor="w", dpi=120)
@@ -65,7 +66,9 @@ def make_reproj_imgs(
         session: Path containing the view subfolders with the calibration board
             images.
         n_samples: The number of images to make per view.
-        save_path: The session to save the images to. If not specified as a non-empty string, images will nto be saved. Images are saved to the view subfolders in this folder as 'save_path / view / reprojection-{frame}.png'.
+        save_path: The session to save the images to. If not specified as a non-empty
+            string, images will not be saved. Images are saved to the view subfolders in
+            this folder as 'save_path / view / reprojection-{frame}.png'.
     """
     cam_folders = [x for x in Path(session).iterdir() if x.is_dir()]
     sampled_frames = sample(frames, n_samples)
@@ -119,7 +122,8 @@ def get_metadata(
                 'rvec': A rotation vector for the orientation of the image
                 'tvec': A translation vector for the orientation of the image
         cgroup: The object containing all the relevant camera parameters.
-        save_path: The file path to save the metadata to. Will only save if a non-empty string is entered.
+        save_path: The file path to save the metadata to. Will only save if a non-empty
+            string is entered.
 
     Returns:
         common_frames: A length n_frames list of the indices of calibration
@@ -370,7 +374,8 @@ def draw_board(
         dict_size: Size of dictionary for encoding aruco markers.
         img_width: Width of the drawn board in pixels.
         img_height: Height of the drawn board in pixels.
-        save: Path to the save the parameters of the board to. Will only save if a non-empty string is given.
+        save: Path to the save the parameters of the board to. Will only save if a
+            non-empty string is given.
     """
     ARUCO_DICTS = {
         (4, 50): aruco.DICT_4X4_50,
@@ -429,7 +434,8 @@ def draw_board(
     "--save",
     show_default=True,
     default="",
-    help="Path to the save the parameters of the board to. Will only save if a non-empty string is given.",
+    help="Path to the save the parameters of the board to. Only saves if a non-empty\
+        string is given.",
 )
 def draw_board_cli(
     save_folder: str,
@@ -480,10 +486,14 @@ def calibrate(
                     square length.
                 'marker_bits': Number of bits encoded in the marker images.
                 'dict_size': Size of the dictionary used for marker encoding.
-        calib_fname: File path to save the calibration to (must end in .toml). Will not save unless a non-empty string is given.
-        metadata_fname: File path to save the calibration metadata to (must end in .h5). Will not save unless a non-empty string is given.
-        histogram_path: Path pointing to the session to save the histogram of reprojection errors to. Will not save unless a non-empty string is given.
-        reproj_path: Path pointing to the session to save the board reprojection images to. Will not save unless a non-empty string is given.
+        calib_fname: File path to save the calibration to (must end in .toml). Will not
+            save unless a non-empty string is given.
+        metadata_fname: File path to save the calibration metadata to (must end in .h5).
+            Will not save unless a non-empty string is given.
+        histogram_path: Path pointing to the session to save the histogram of
+            reprojection errors to. Will not save unless a non-empty string is given.
+        reproj_path: Path pointing to the session to save the board reprojection images
+            to. Will not save unless a non-empty string is given.
 
     Returns:
         cgroup: A CameraGroup object containing all the camera parameters for
@@ -546,22 +556,26 @@ def calibrate(
 @click.option(
     "--calib_fname",
     default="",
-    help="File path to save the calibration to. Will not save unles a non-empty string is given.",
+    help="File path to save the calibration to. Will not save unless a non-empty \
+        string is given.",
 )
 @click.option(
     "--metadata_fname",
     default=False,
-    help="File path to save the calibration metadata to. Will not save unles a non-empty string is given.",
+    help="File path to save the calibration metadata to. Will not save unless a \
+        non-empty string is given.",
 )
 @click.option(
     "--histogram_path",
     default="",
-    help="Path pointing to the session to save the histogram of reprojection errors to. Will not save unless a non-empty string is given.",
+    help="Path pointing to the session to save the histogram of reprojection errors \
+        to. Will not save unless a non-empty string is given.",
 )
 @click.option(
     "--reproj_path",
     default="",
-    help="Path pointing to the session to save the board reprojection images to. Will not save unless a non-empty string is given.",
+    help="Path pointing to the session to save the board reprojection images to. Will \
+        not save unless a non-empty string is given.",
 )
 def calibrate_cli(
     session: str,

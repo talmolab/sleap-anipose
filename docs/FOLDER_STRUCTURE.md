@@ -1,6 +1,6 @@
 # Folder structure
 
-# TODO: Update basic structure tree, build understanding from ground up 
+<!-- TODO: Update bare bones folder structure -->
 
 This package expects that your data has already been pose tracked and proofread with
 [SLEAP](https://sleap.ai), and organized according to the specifications below.

@@ -55,18 +55,30 @@ def triangulate(
             containing the camera data. Note that the order of the cameras in
             the CameraGroup object must be the same as the order of the arrays
             along the camera axis.
-        fname: The file path to save the triangulated points to (must end in .h5). Will not save unless a non-empty string is given.
+        fname: The file path to save the triangulated points to (must end in .h5). Will
+            not save unless a non-empty string is given.
         disp_progress: A flag determining whether or not to show triangulation
             progress, false by default.
-        kwargs: Arguments related to filtering and limb constraints. Below are some of the more useful arguments, see the aniposelib for more details.
-                constraints: A Kx2 array array for rigid limb constraints, default empty. An example would be [[0, 1], [2,3]], which denotes that the length between joints 1 and 2 and the length between joints 2 and 3 are constant.
-                constraints_weak: A Kx2 array of more flexible constraints such as shoulder length in humans or tarsus length in flies, default empty.
-                scale_smooth: The weight of the temporal smoothing term in the loss function, default 4.
-                scale_length: The weight of the length constraints in the loss function, default 2.
-                scale_length_weak: The weight of the weak length constraints in the loss function, default 0.5.
-                reproj_error_threshold: A threshold for determining which points are not suitable for triangulation, default 15.
-                reproj_loss: The loss function for the reprojection loss, default 'soft_l1'. See scipy.optimize.least_squares for more options.
-                n_deriv_smooth: The order of derivative to smooth for in the temporal filtering, default 1.
+        kwargs: Arguments related to filtering and limb constraints. Below are some of
+            the more useful arguments, see the aniposelib for more details.
+                constraints: A Kx2 array for rigid limb constraints, default empty. An
+                    example would be [[0, 1], [2,3]], which denotes that the length
+                    between joints 1 and 2 and the length between joints 2 and 3 are
+                    constant.
+                constraints_weak: A Kx2 array of more flexible constraints such as
+                    shoulder length in humans or tarsus length in flies, default empty.
+                scale_smooth: The weight of the temporal smoothing term in the loss
+                    function, default 4.
+                scale_length: The weight of the length constraints in the loss function,
+                     default 2.
+                scale_length_weak: The weight of the weak length constraints in the loss
+                    function, default 0.5.
+                reproj_error_threshold: A threshold for determining which points are not
+                    suitable for triangulation, default 15.
+                reproj_loss: The loss function for the reprojection loss, default
+                    'soft_l1'. See scipy.optimize.least_squares for more options.
+                n_deriv_smooth: The order of derivative to smooth for in the temporal
+                    filtering, default 1.
 
     Returns:
         A matrix of shape (n_frames, n_tracks, n_nodes, 3) containing the triangulated
@@ -119,7 +131,8 @@ def triangulate(
 @click.option(
     "--fname",
     default="",
-    help="The file path to save the triangulated points to (must end in .h5). Will not save unless a non-empty string is given. ",
+    help="The file path to save the triangulated points to (must end in .h5). Will not \
+        save unless a non-empty string is given. ",
 )
 @click.option(
     "--disp_progress",
@@ -129,12 +142,15 @@ def triangulate(
 @click.option(
     "--constraints",
     default=[],
-    help="A Kx2 array array for rigid limb constraints, default empty. An example would be [[0, 1], [2,3]], which denotes that the length between joints 1 and 2 and the length between joints 2 and 3 are constant.",
+    help="A Kx2 array array for rigid limb constraints, default empty. An example would\
+        be [[0, 1], [2,3]], which denotes that the length between joints 1 and 2 and\
+        the length between joints 2 and 3 are constant.",
 )
 @click.option(
     "--constraints_weak",
     default=[],
-    help="A Kx2 array of more flexible constraints such as shoulder length in humans or tarsus length in flies, default empty.",
+    help="A Kx2 array of more flexible constraints such as shoulder length in humans or\
+        tarsus length in flies, default empty.",
 )
 @click.option(
     "--scale_smooth",
