@@ -531,7 +531,7 @@ def calibrate(
 
     make_reproj_imgs(detections, reprojections, frames, session, reproj_path)
 
-    if len(calib_fname > 0):
+    if len(calib_fname) > 0:
         cgroup.dump(calib_fname)
 
     metadata = (frames, detections, triangulations, reprojections)

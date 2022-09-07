@@ -76,7 +76,7 @@ Alternatively, instead of taking videos for board calibration, one could take sy
 8. Run the calibration function from either the command line or a script.
 
 ```
-slap-calibrate -- session my/path --board my/path/board.toml --fname my/path/calibration.toml --metadata_fname my/path/calibration.metadata.h5 --histogram_path my/path --reproj_path my/path
+slap-calibrate -- session my/path --board my/path/board.toml --calib_fname my/path/calibration.toml --metadata_fname my/path/calibration.metadata.h5 --histogram_path my/path --reproj_path my/path
 ```
 
 ```python

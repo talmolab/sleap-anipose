@@ -9,7 +9,7 @@ import toml
 
 
 def test_calibrate(minimal_session, tmp_path):
-    board = read_board(Path(minimal_session) / "board.toml")
+    board = read_board((Path(minimal_session) / "board.toml").as_posix())
     cgroup, _ = calibrate(minimal_session, board)
 
     # Testing the basics of the calibration.
