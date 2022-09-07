@@ -27,7 +27,7 @@ def make_histogram(
             detected corner positions for each camera view.
         reprojections: A (n_cams, n_frames, n_corners, 2) array containing the
             reprojected corner positions for each camera view.
-        session: The session directory to save the figure to. Will only save the figure if a non-empty string is entered.
+        save_path: The session directory to save the figure to. Will only save the figure if a non-empty string is entered.
     """
     reprojection_error = np.linalg.norm((detections - reprojections), axis=-1)
     fig = plt.figure(figsize=(8, 6), facecolor="w", dpi=120)
@@ -372,7 +372,6 @@ def draw_board(
         img_height: Height of the drawn board in pixels.
         save: Path to the save the parameters of the board to. Will only save if a non-empty string is given.
     """
-
     ARUCO_DICTS = {
         (4, 50): aruco.DICT_4X4_50,
         (5, 50): aruco.DICT_5X5_50,
