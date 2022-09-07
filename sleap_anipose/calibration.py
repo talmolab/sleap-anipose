@@ -529,7 +529,9 @@ def calibrate(
 
     make_histogram(detections, reprojections, histogram_path)
 
-    make_reproj_imgs(detections, reprojections, frames, session, reproj_path)
+    make_reproj_imgs(
+        detections, reprojections, frames, session, n_samples=4, reproj_path=reproj_path
+    )
 
     if len(calib_fname) > 0:
         cgroup.dump(calib_fname)
