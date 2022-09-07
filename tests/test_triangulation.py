@@ -15,7 +15,7 @@ def test_triangulate(minimal_session, tmp_path):
     tmp_p3d.mkdir()
     fname = tmp_p3d / "points3d.h5"
 
-    p3d = triangulate(minimal_session, calibration.as_posix(), fname)
+    p3d = triangulate(minimal_session, calibration.as_posix(), fname.as_posix())
 
     # Testing shape of the output matrices.
     _, n_frames, n_tracks, n_nodes, _ = load_tracks(minimal_session).shape
