@@ -2,10 +2,9 @@
 
 import numpy as np
 import h5py
-import sleap
 from pathlib import Path
 from aniposelib.cameras import CameraGroup
-from typing import Union
+from typing import Union, List
 import click
 
 
@@ -18,8 +17,9 @@ def load_view(view: str) -> np.ndarray:
     Returns:
         A (n_frames, n_tracks, n_nodes, 2) shape ndarray of the 2D points.
     """
-    slp_file = list(Path(view).glob("*proofread.slp"))[0].as_posix()
-    track = sleap.load_file(slp_file, detect_videos=True).numpy()
+    h5_file = list(Path(view).glob("*analysis.h5"))[0].as_posix()
+    with h5py.File(h5_file, "r") as f:
+        track = f["tracks"][:].transpose((-1, 0, -2, 1))
     return track
 
 
@@ -41,9 +41,9 @@ def load_tracks(session: str) -> np.ndarray:
 def triangulate(
     p2d: Union[np.ndarray, str],
     calib: Union[CameraGroup, str],
-    save: bool = False,
-    session: str = ".",
+    fname: str = "",
     disp_progress: bool = False,
+    **kwargs,
 ) -> np.ndarray:
     """Triangulate 3D points for a given session.
 
@@ -55,17 +55,34 @@ def triangulate(
             containing the camera data. Note that the order of the cameras in
             the CameraGroup object must be the same as the order of the arrays
             along the camera axis.
-        save: A flag determining whether or not to save the results of
-            triangulation.
-        session: The path to the session directory to save the points to. If
-            not specified, will save to the current working directory.
+        fname: The file path to save the triangulated points to (must end in .h5). Will
+            not save unless a non-empty string is given.
         disp_progress: A flag determining whether or not to show triangulation
             progress, false by default.
+        kwargs: Arguments related to filtering and limb constraints. Below are some of
+            the more useful arguments, see the aniposelib for more details.
+                constraints: A Kx2 array for rigid limb constraints, default empty. An
+                    example would be [[0, 1], [2,3]], which denotes that the length
+                    between joints 1 and 2 and the length between joints 2 and 3 are
+                    constant.
+                constraints_weak: A Kx2 array of more flexible constraints such as
+                    shoulder length in humans or tarsus length in flies, default empty.
+                scale_smooth: The weight of the temporal smoothing term in the loss
+                    function, default 4.
+                scale_length: The weight of the length constraints in the loss function,
+                     default 2.
+                scale_length_weak: The weight of the weak length constraints in the loss
+                    function, default 0.5.
+                reproj_error_threshold: A threshold for determining which points are not
+                    suitable for triangulation, default 15.
+                reproj_loss: The loss function for the reprojection loss, default
+                    'soft_l1'. See scipy.optimize.least_squares for more options.
+                n_deriv_smooth: The order of derivative to smooth for in the temporal
+                    filtering, default 1.
 
     Returns:
-        A matrix of shape (n_frames, n_tracks, n_nodes, 3) containing the
-        triangulated 3D points. If save is True, the matrix will be saved to
-        the session folder as 'points3d.h5'.
+        A matrix of shape (n_frames, n_tracks, n_nodes, 3) containing the triangulated
+        3D points.
     """
     if type(p2d) == str:
         points_2d = load_tracks(p2d)
@@ -79,26 +96,17 @@ def triangulate(
 
     n_tracks = points_2d.shape[2]
 
-    init_points = np.stack(
+    points_3d = np.stack(
         [
             cgroup.triangulate_optim(
-                points_2d[:, :, track], init_progress=disp_progress
+                points_2d[:, :, track], init_progress=disp_progress, **kwargs
             )
             for track in range(n_tracks)
         ],
         axis=1,
     )  # (n_frames, n_tracks, n_nodes, 3)
 
-    points_3d = np.stack(
-        [
-            cgroup.optim_points(points_2d[:, :, track], init_points[:, track])
-            for track in range(n_tracks)
-        ],
-        axis=1,
-    )  # (n_frames, n_tracks, n_nodes, 3)
-
-    if save:
-        fname = Path(session) / "points3d.h5"
+    if len(fname) > 0:
         with h5py.File(fname, "w") as f:
             f.create_dataset(
                 "tracks",
@@ -119,29 +127,90 @@ def triangulate(
     "--p2d",
     help="Path pointing to the session directory containing the SLEAP track files.",
 )
-@click.option("--calib", help="Path pointing to the calibration.toml file.")
+@click.option("--calib", help="Path pointing to the calibration file.")
 @click.option(
-    "--save",
-    default=False,
-    help="Flag determining whether or not to save triangulation results.",
-)
-@click.option(
-    "--session", default=".", help="Path to save the triangulation results to."
+    "--fname",
+    default="",
+    help="The file path to save the triangulated points to (must end in .h5). Will not \
+        save unless a non-empty string is given. ",
 )
 @click.option(
     "--disp_progress",
     default=False,
     help="Flag determining whether or not to display triangulation progress.",
 )
+@click.option(
+    "--constraints",
+    default=[],
+    help="A Kx2 array array for rigid limb constraints, default empty. An example would\
+        be [[0, 1], [2,3]], which denotes that the length between joints 1 and 2 and\
+        the length between joints 2 and 3 are constant.",
+)
+@click.option(
+    "--constraints_weak",
+    default=[],
+    help="A Kx2 array of more flexible constraints such as shoulder length in humans or\
+        tarsus length in flies, default empty.",
+)
+@click.option(
+    "--scale_smooth",
+    default=4,
+    help="The weight of the temporal smoothing term in the loss function, default 4.",
+)
+@click.option(
+    "--scale_length",
+    default=2,
+    help="The weight of the length constraints in the loss function, default 2.",
+)
+@click.option(
+    "--scale_length_weak",
+    default=0.5,
+    help="The weight of the weak length constraints in the loss function, default 2.",
+)
+@click.option(
+    "--reproj_error_threshold",
+    default=15,
+    help="The threshold in pixels for discarding points for triangulation, default 15.",
+)
+@click.option(
+    "--reproj_loss",
+    default="soft_l1",
+    help="Type of loss function for the reprojection error.",
+)
+@click.option(
+    "--n_deriv_smooth",
+    default=1,
+    help="The order of derivative to smooth for in the temporal filtering, default 1.",
+)
 def triangulate_cli(
     p2d: str,
     calib: str,
-    save: bool = False,
-    session: str = ".",
+    fname: str = "",
     disp_progress: bool = False,
+    constraints: List[List[int]] = [],
+    constraints_weak: List[List[int]] = [],
+    scale_smooth: float = 4.0,
+    scale_length: float = 2.0,
+    scale_length_weak: float = 0.5,
+    reproj_error_threshold: float = 15.0,
+    reproj_loss: str = "soft_l1",
+    n_deriv_smooth: int = 1,
 ) -> np.ndarray:
     """Triangulate points from the CLI."""
-    return triangulate(p2d, calib, save, session, disp_progress)
+    return triangulate(
+        p2d,
+        calib,
+        fname,
+        disp_progress,
+        constraints=constraints,
+        constraints_weak=constraints_weak,
+        scale_smooth=scale_smooth,
+        scale_length=scale_length,
+        scale_length_weak=scale_length_weak,
+        reproj_error_threshold=reproj_error_threshold,
+        reproj_loss=reproj_loss,
+        n_deriv_smooth=n_deriv_smooth,
+    )
 
 
 def reproject(
