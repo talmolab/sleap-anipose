@@ -97,12 +97,14 @@ def triangulate(
 
     n_tracks = points_2d.shape[2]
 
-    kwargs["constraints"] = (
-        [] if kwargs["constraints"] is None else kwargs["constraints"]
-    )
-    kwargs["constraints_weak"] = (
-        [] if kwargs["constraints_weak"] is None else kwargs["constraints_weak"]
-    )
+    if "constraints" in kwargs.keys():
+        kwargs["constraints"] = (
+            [] if kwargs["constraints"] is None else kwargs["constraints"]
+        )
+    if "constraints_weak" in kwargs.keys():
+        kwargs["constraints_weak"] = (
+            [] if kwargs["constraints_weak"] is None else kwargs["constraints_weak"]
+        )
 
     points_3d = np.stack(
         [
