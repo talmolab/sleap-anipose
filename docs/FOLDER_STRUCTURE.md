@@ -8,7 +8,7 @@ There are 3 pre-requisites that must be met to use the sleap-anipose package.
 
 3. **User data is organized according to the notion of a *session***.
 
-A session is a folder that contians videos for a single continuous recording, i.e. **there is only 1 video per vamera view in a session folder.** Sessions have a unique internal structure to keep track of files which are specific to the entire recording and which files are specific to the camera view. The basic structure of a session is shown below, with pre-requisite files and folders ending in an asterisk. 
+A session is a folder that contians videos for a single continuous recording, i.e. **there is only 1 video per camera view in a session folder.** Sessions have a unique internal structure to keep track of files which are specific to the entire recording and which files are specific to the camera view. The basic structure of a session is shown below, with pre-requisite files and folders ending in an asterisk. 
 
 ```
 session_0
@@ -21,7 +21,7 @@ session_0
 |   side/*
 └── top/*
     ├── top_view_recording.mp4*
-    |   top_view_tracks.slp*
+    |   top_view_tracks.slp
     |   top_view_tracks.proofread.analysis.h5*
     |   reprojected_points2d.h5
     |   reprojection_0.png
