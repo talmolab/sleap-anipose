@@ -27,7 +27,7 @@ def make_histogram(
             detected corner positions for each camera view.
         reprojections: A (n_cams, n_frames, n_corners, 2) array containing the
             reprojected corner positions for each camera view.
-        save_path: The session directory to save the figure to. Will only save the
+        save_path: The path to save the figure to. Will only save the
             figure if a non-empty string is entered.
     """
     reprojection_error = np.linalg.norm((detections - reprojections), axis=-1)
@@ -41,9 +41,7 @@ def make_histogram(
     save = len(save_path) > 0
 
     if save:
-        plt.savefig(
-            Path(save_path) / "reprojection_errors.png", format="png", dpi="figure"
-        )
+        plt.savefig(save_path, format="png", dpi="figure")
 
 
 def make_reproj_imgs(
@@ -287,9 +285,9 @@ def read_board_cli(board_file: str):
 
 
 def write_board(
-    fname: str,
-    board_width: int,
-    board_height: int,
+    board_name: str,
+    board_X: int,
+    board_Y: int,
     square_length: float,
     marker_length: float,
     marker_bits: int,
@@ -298,9 +296,9 @@ def write_board(
     """Write a toml file detailing a calibration board.
 
     Args:
-        fname: File name to save the board as.
-        board_width: Number of squares along the width of the board.
-        board_height: Number of squares along the height of the board.
+        board_name: File name to save the board as.
+        board_X: Number of squares along the width of the board.
+        board_Y: Number of squares along the height of the board.
         square_length: Length of square edge in any measured units.
         marker_length: Length of marker edge in the same measured units as the
             square length.
@@ -308,21 +306,21 @@ def write_board(
         dict_size: Size of the dictionary used for marker encoding.
     """
     board_dict = {
-        "board_width": board_width,
-        "board_height": board_height,
+        "board_X": board_X,
+        "board_Y": board_Y,
         "square_length": square_length,
         "marker_length": marker_length,
         "marker_bits": marker_bits,
         "dict_size": dict_size,
     }
-    with open(fname, "w") as f:
+    with open(board_name, "w") as f:
         toml.dump(board_dict, f)
 
 
 @click.command()
-@click.option("--fname", help="File name to save the board as.")
-@click.option("--board_width", help="Number of squares along the width of the board.")
-@click.option("--board_height", help="Number of squares along the height of the board.")
+@click.option("--board_name", help="File name to save the board as.")
+@click.option("--board_X", help="Number of squares along the width of the board.")
+@click.option("--board_Y", help="Number of squares along the height of the board.")
 @click.option("--square_length", help="Length of square edge in any units.")
 @click.option(
     "--marker_length", help="Length of marker edge in same units as square length."
@@ -330,9 +328,9 @@ def write_board(
 @click.option("--marker_bits", help="Number of bits encoded in the marker images.")
 @click.option("--dict_size", help="Size of dictionary used for marking encoding.")
 def write_board_cli(
-    fname: str,
-    board_width: int,
-    board_height: int,
+    board_name: str,
+    board_X: int,
+    board_Y: int,
     square_length: float,
     marker_length: float,
     marker_bits: int,
@@ -340,9 +338,9 @@ def write_board_cli(
 ):
     """Write a calibration board .toml file from the CLI."""
     write_board(
-        fname,
-        board_width,
-        board_height,
+        board_name,
+        board_X,
+        board_Y,
         square_length,
         marker_length,
         marker_bits,
@@ -424,8 +422,10 @@ def draw_board(
 @click.option("--board_name", help="Path to save the file to.")
 @click.option("--board_X", help="Number of squares along the width of the board.")
 @click.option("--board_Y", help="Number of squares along the height of the board.")
-@click.option("--square_length", help="Length of square edges in meters.")
-@click.option("--marker_length", help="Length of marker edges in meters.")
+@click.option("--square_length", help="Length of square edges in any units.")
+@click.option(
+    "--marker_length", help=("Length of marker edges in the units of square " "length.")
+)
 @click.option("--marker_bits", help="Number of bits in aruco markers.")
 @click.option("--dict_size", help="Size of dictionary for encoding aruco markers.")
 @click.option("--img_width", help="Width of the drawn image in pixels.")
@@ -434,8 +434,10 @@ def draw_board(
     "--save",
     show_default=True,
     default="",
-    help="Path to the save the parameters of the board to. Only saves if a non-empty\
-        string is given.",
+    help=(
+        "Path to the save the parameters of the board to. Only saves if a non-empty "
+        "string is given."
+    ),
 )
 def draw_board_cli(
     save_folder: str,
@@ -490,8 +492,8 @@ def calibrate(
             save unless a non-empty string is given.
         metadata_fname: File path to save the calibration metadata to (must end in .h5).
             Will not save unless a non-empty string is given.
-        histogram_path: Path pointing to the session to save the histogram of
-            reprojection errors to. Will not save unless a non-empty string is given.
+        histogram_path: Path to save the histogram of reprojection errors to. Will not
+            save unless a non-empty string is given.
         reproj_path: Path pointing to the session to save the board reprojection images
             to. Will not save unless a non-empty string is given.
 
@@ -556,26 +558,34 @@ def calibrate(
 @click.option(
     "--calib_fname",
     default="",
-    help="File path to save the calibration to. Will not save unless a non-empty \
-        string is given.",
+    help=(
+        "File path to save the calibration to. Will not save unless a non-empty "
+        "string is given."
+    ),
 )
 @click.option(
     "--metadata_fname",
-    default=False,
-    help="File path to save the calibration metadata to. Will not save unless a \
-        non-empty string is given.",
+    default="",
+    help=(
+        "File path to save the calibration metadata to. Will not save unless a "
+        "non-empty string is given."
+    ),
 )
 @click.option(
     "--histogram_path",
     default="",
-    help="Path pointing to the session to save the histogram of reprojection errors \
-        to. Will not save unless a non-empty string is given.",
+    help=(
+        "Path to save the histogram of reprojection errors to. Will not save unless a"
+        " non-empty string is given."
+    ),
 )
 @click.option(
     "--reproj_path",
     default="",
-    help="Path pointing to the session to save the board reprojection images to. Will \
-        not save unless a non-empty string is given.",
+    help=(
+        "Path pointing to the session to save the board reprojection images to. "
+        "Will not save unless a non-empty string is given."
+    ),
 )
 def calibrate_cli(
     session: str,

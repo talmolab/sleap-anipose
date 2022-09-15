@@ -131,8 +131,10 @@ def triangulate(
 @click.option(
     "--fname",
     default="",
-    help="The file path to save the triangulated points to (must end in .h5). Will not \
-        save unless a non-empty string is given. ",
+    help=(
+        "The file path to save the triangulated points to (must end in .h5). "
+        "Will not save unless a non-empty string is given."
+    ),
 )
 @click.option(
     "--disp_progress",
@@ -142,15 +144,19 @@ def triangulate(
 @click.option(
     "--constraints",
     default=[],
-    help="A Kx2 array array for rigid limb constraints, default empty. An example would\
-        be [[0, 1], [2,3]], which denotes that the length between joints 1 and 2 and\
-        the length between joints 2 and 3 are constant.",
+    help=(
+        "A Kx2 array array for rigid limb constraints, default empty. An example "
+        "would be [[0, 1], [2,3]], which denotes that the length between joints 1 and 2"
+        " and the length between joints 2 and 3 are constant."
+    ),
 )
 @click.option(
     "--constraints_weak",
     default=[],
-    help="A Kx2 array of more flexible constraints such as shoulder length in humans or\
-        tarsus length in flies, default empty.",
+    help=(
+        "A Kx2 array of more flexible constraints such as shoulder length in humans "
+        "or tarsus length in flies, default empty."
+    ),
 )
 @click.option(
     "--scale_smooth",
