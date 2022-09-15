@@ -1,5 +1,6 @@
 """This module contains utilities related to triangulation."""
 
+from xml.dom import NotFoundErr
 import numpy as np
 import h5py
 from pathlib import Path
@@ -96,6 +97,13 @@ def triangulate(
 
     n_tracks = points_2d.shape[2]
 
+    kwargs["constraints"] = (
+        [] if kwargs["constraints"] is None else kwargs["constraints"]
+    )
+    kwargs["constraints_weak"] = (
+        [] if kwargs["constraints_weak"] is None else kwargs["constraints_weak"]
+    )
+
     points_3d = np.stack(
         [
             cgroup.triangulate_optim(
@@ -138,12 +146,13 @@ def triangulate(
 )
 @click.option(
     "--disp_progress",
+    is_flag=True,
     default=False,
     help="Flag determining whether or not to display triangulation progress.",
 )
 @click.option(
     "--constraints",
-    default=[],
+    default=None,
     help=(
         "A Kx2 array array for rigid limb constraints, default empty. An example "
         "would be [[0, 1], [2,3]], which denotes that the length between joints 1 and 2"
@@ -152,7 +161,7 @@ def triangulate(
 )
 @click.option(
     "--constraints_weak",
-    default=[],
+    default=None,
     help=(
         "A Kx2 array of more flexible constraints such as shoulder length in humans "
         "or tarsus length in flies, default empty."
@@ -193,8 +202,8 @@ def triangulate_cli(
     calib: str,
     fname: str = "",
     disp_progress: bool = False,
-    constraints: List[List[int]] = [],
-    constraints_weak: List[List[int]] = [],
+    constraints: List[List[int]] = None,
+    constraints_weak: List[List[int]] = None,
     scale_smooth: float = 4.0,
     scale_length: float = 2.0,
     scale_length_weak: float = 0.5,
