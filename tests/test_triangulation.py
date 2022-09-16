@@ -18,7 +18,7 @@ def test_triangulate(minimal_session, tmp_path, frames=(25, 75)):
     p3d = triangulate(minimal_session, calibration.as_posix(), frames, fname.as_posix())
 
     # Testing shape of the output matrices.
-    _, n_frames, n_tracks, n_nodes, _ = load_tracks(minimal_session).shape
+    _, n_frames, n_tracks, n_nodes, _ = load_tracks(minimal_session, frames).shape
     assert n_frames == frames[1] - frames[0]
     assert p3d.shape == (n_frames, n_tracks, n_nodes, 3)
 
