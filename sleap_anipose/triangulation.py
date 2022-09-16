@@ -5,15 +5,18 @@ import numpy as np
 import h5py
 from pathlib import Path
 from aniposelib.cameras import CameraGroup
-from typing import Union, List
+from typing import Union, List, Tuple
 import click
 
 
-def load_view(view: str) -> np.ndarray:
+def load_view(view: str, frames: Tuple[int] = ()) -> np.ndarray:
     """Load track for a view folder.
 
     Args:
         view: The path to the view folder (relative to the working directory).
+        frames: A tuple structured as (start_frame, end_frame) containing the frame range
+            to load from the video. The range is (inclusive, exclusive) and will be considered as
+            the entire video if not otherwise specified.
 
     Returns:
         A (n_frames, n_tracks, n_nodes, 2) shape ndarray of the 2D points.
@@ -21,27 +24,34 @@ def load_view(view: str) -> np.ndarray:
     h5_file = list(Path(view).glob("*analysis.h5"))[0].as_posix()
     with h5py.File(h5_file, "r") as f:
         track = f["tracks"][:].transpose((-1, 0, -2, 1))
-    return track
+    if frames:
+        return track[frames[0] : frames[1]]
+    else:
+        return track
 
 
-def load_tracks(session: str) -> np.ndarray:
+def load_tracks(session: str, frames: Tuple[int] = ()) -> np.ndarray:
     """Load all view tracks for a session folder.
 
     Args:
         session: The path pointing to the session directory (relative to the
             working directory).
+        frames: A tuple structured as (start_frame, end_frame) containing the frame range
+            to load from each video. The range is (inclusive, exclusive) and will be considered as
+            the entire video if not otherwise specified.
 
     Returns:
         A (n_views, n_frames, n_tracks, n_nodes, 2) shape ndarray of the tracks.
     """
     views = [x for x in Path(session).iterdir() if x.is_dir()]
-    tracks = np.stack([load_view(view) for view in views], axis=0)
+    tracks = np.stack([load_view(view, frames) for view in views], axis=0)
     return tracks
 
 
 def triangulate(
     p2d: Union[np.ndarray, str],
     calib: Union[CameraGroup, str],
+    frames: Tuple[int] = (),
     fname: str = "",
     disp_progress: bool = False,
     **kwargs,
@@ -56,6 +66,9 @@ def triangulate(
             containing the camera data. Note that the order of the cameras in
             the CameraGroup object must be the same as the order of the arrays
             along the camera axis.
+        frames: A tuple structured as (start_frame, end_frame) containing the frame range
+            to triangulate. The range is (inclusive, exclusive) and will be considered as
+            the entire video if not otherwise specified.
         fname: The file path to save the triangulated points to (must end in .h5). Will
             not save unless a non-empty string is given.
         disp_progress: A flag determining whether or not to show triangulation
@@ -85,10 +98,14 @@ def triangulate(
         A matrix of shape (n_frames, n_tracks, n_nodes, 3) containing the triangulated
         3D points.
     """
+
     if type(p2d) == str:
-        points_2d = load_tracks(p2d)
+        points_2d = load_tracks(p2d, frames)
     else:
-        points_2d = p2d.copy()
+        if frames:
+            points_2d = p2d.copy()[frames[0], frames[1]]
+        else:
+            points_2d = p2d.copy()
 
     if type(calib) == str:
         cgroup = CameraGroup.load(calib)
@@ -128,6 +145,14 @@ def triangulate(
             f["tracks"].attrs[
                 "Description"
             ] = "Shape: (n_frames, n_tracks, n_nodes, 3)."
+
+            if frames:
+                f.create_dataset(
+                    "frames", data=frames, compression="gzip", compression_opts=1
+                )
+                f["frames"].attrs[
+                    "Description"
+                ] = "Range, inclusive to exclusive, of frames triangulated over."
 
     return points_3d
 

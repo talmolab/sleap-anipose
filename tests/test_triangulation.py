@@ -7,7 +7,7 @@ import numpy as np
 import h5py
 
 
-def test_triangulate(minimal_session, tmp_path):
+def test_triangulate(minimal_session, tmp_path, frames=(25, 75)):
     calibration = Path(minimal_session) / "calibration.toml"
     assert calibration.exists()
 
@@ -15,17 +15,20 @@ def test_triangulate(minimal_session, tmp_path):
     tmp_p3d.mkdir()
     fname = tmp_p3d / "points3d.h5"
 
-    p3d = triangulate(minimal_session, calibration.as_posix(), fname.as_posix())
+    p3d = triangulate(minimal_session, calibration.as_posix(), frames, fname.as_posix())
 
     # Testing shape of the output matrices.
     _, n_frames, n_tracks, n_nodes, _ = load_tracks(minimal_session).shape
+    assert n_frames == frames[1] - frames[0]
     assert p3d.shape == (n_frames, n_tracks, n_nodes, 3)
 
     # Testing saving functionality.
     assert fname.exists()
     with h5py.File(fname, "r") as f:
         loaded_p3d = f["tracks"][:]
+        loaded_frames = f["frames"][:]
     assert np.all(loaded_p3d == p3d)
+    assert np.all(loaded_frames == frames)
 
 
 def test_reproject(minimal_session):
@@ -44,18 +47,20 @@ def test_reproject(minimal_session):
     assert p2d.shape[-1] == 2
 
 
-def test_load_tracks(minimal_session):
+def test_load_tracks(minimal_session, frames=(25, 75)):
     cams = [x for x in Path(minimal_session).iterdir() if x.is_dir()]
-    p2d = load_tracks(minimal_session)
+    p2d = load_tracks(minimal_session, frames)
     assert p2d.shape[0] == len(cams)
+    assert p2d.shape[1] == frames[1] - frames[0]
     assert p2d.shape[-1] == 2
 
 
-def test_load_view(minimal_session):
+def test_load_view(minimal_session, frames=(25, 75)):
     cams = [x.as_posix() for x in Path(minimal_session).iterdir() if x.is_dir()]
     shapes = []
     for cam in cams:
-        p2d = load_view(cam)
+        p2d = load_view(cam, frames)
         shapes.append(p2d.shape)
     n_frames, n_tracks, n_nodes, _ = shapes[0]
+    assert n_frames == frames[1] - frames[0]
     assert np.all([x == (n_frames, n_tracks, n_nodes, 2) for x in shapes])
