@@ -14,9 +14,9 @@ def load_view(view: str, frames: Tuple[int] = ()) -> np.ndarray:
 
     Args:
         view: The path to the view folder (relative to the working directory).
-        frames: A tuple structured as (start_frame, end_frame) containing the frame range
-            to load from the video. The range is (inclusive, exclusive) and will be considered as
-            the entire video if not otherwise specified.
+        frames: A tuple structured as (start_frame, end_frame) containing the frame
+            range to load from the video. The range is (inclusive, exclusive) and will
+            be considered as the entire video if not otherwise specified.
 
     Returns:
         A (n_frames, n_tracks, n_nodes, 2) shape ndarray of the 2D points.
@@ -36,9 +36,9 @@ def load_tracks(session: str, frames: Tuple[int] = ()) -> np.ndarray:
     Args:
         session: The path pointing to the session directory (relative to the
             working directory).
-        frames: A tuple structured as (start_frame, end_frame) containing the frame range
-            to load from each video. The range is (inclusive, exclusive) and will be considered as
-            the entire video if not otherwise specified.
+        frames: A tuple structured as (start_frame, end_frame) containing the frame
+            range to load from each video. The range is (inclusive, exclusive) and will
+            be considered as the entire video if not otherwise specified.
 
     Returns:
         A (n_views, n_frames, n_tracks, n_nodes, 2) shape ndarray of the tracks.
@@ -66,9 +66,9 @@ def triangulate(
             containing the camera data. Note that the order of the cameras in
             the CameraGroup object must be the same as the order of the arrays
             along the camera axis.
-        frames: A tuple structured as (start_frame, end_frame) containing the frame range
-            to triangulate. The range is (inclusive, exclusive) and will be considered as
-            the entire video if not otherwise specified.
+        frames: A tuple structured as (start_frame, end_frame) containing the frame
+            range to triangulate. The range is (inclusive, exclusive) and will be
+            considered as the entire video if not otherwise specified.
         fname: The file path to save the triangulated points to (must end in .h5). Will
             not save unless a non-empty string is given.
         disp_progress: A flag determining whether or not to show triangulation
@@ -98,7 +98,6 @@ def triangulate(
         A matrix of shape (n_frames, n_tracks, n_nodes, 3) containing the triangulated
         3D points.
     """
-
     if type(p2d) == str:
         points_2d = load_tracks(p2d, frames)
     else:
