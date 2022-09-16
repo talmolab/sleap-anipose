@@ -70,10 +70,10 @@ The `session` argument is a path pointing to the session folder to calibrate. Th
 8. Generate the triangulated 3D points based on your tracking and calibration:
 
 ```
-slap-triangulate --p2d my/path --calib my/path/calibration.toml --fname my/path/points3d.h5 --disp_progress True
+slap-triangulate --p2d my/path --calib my/path/calibration.toml --frames (1000, 2000) --fname my/path/points3d.h5 --disp_progress True
 ```
 
-The `p2d` argument points to the session containing the tracked and proofread files to be used for triangulation. The `calib` argument is a path pointing to the .toml file containing the results of calibration. The `fname` argument is the path to save the triangulated points to and it muse end in .h5. If no input is given the points will not be saved. The `disp_progress` option is a flag that determines whether or not to display the progress of the triangulation procedure (default False). In addition to these arguments, there are keyword arguments related to the filtering and error rejection protocols within the triangulation procedure. These keyword arguments are elaborated upon in the section below.
+The `p2d` argument points to the session containing the tracked and proofread files to be used for triangulation. The `calib` argument is a path pointing to the .toml file containing the results of calibration. The `frames` argument is a tuple covering the range of frames to triangulate (inclusive lower end, exclusive upper end). The `fname` argument is the path to save the triangulated points to and it muse end in .h5. If no input is given the points will not be saved. The `disp_progress` option is a flag that determines whether or not to display the progress of the triangulation procedure (default False). In addition to these arguments, there are keyword arguments related to the filtering and error rejection protocols within the triangulation procedure. These keyword arguments are elaborated upon in the section below.
 
 **As a script**
 
@@ -84,7 +84,7 @@ import sleap_anipose as slap
 
 slap.draw_board('my/path/board.jpg', 8, 11, 24.0, 18.75, 4, 1000, 1440, 1440, save = 'my/path/board.toml')
 cgroup, metadata = slap.calibrate("my/path", "my/path/board.toml", calib_fname = "my/path/calibration.toml", metadata_fname = "my/path/calibration.metadata.h5", histogram_path = "my/path/reprojection_histogram.png", reproj_path = "my/path")
-points3d = slap.triangulate('my/path', 'my/path/calibration.toml', fname = 'my/path/points3d.h5', disp_progress=True, 
+points3d = slap.triangulate('my/path', 'my/path/calibration.toml', frames = (1000, 2000), fname = 'my/path/points3d.h5', disp_progress=True, 
                             constraints = [[0,1], [2,3]], constraints_weak = [[4,5]],
                             scale_smooth = 3, scale_length = 4, scale_length_weak = 1, 
                             reproj_error_threshold = 10, reproj_loss = 'l2', n_deriv_smooth = 2)

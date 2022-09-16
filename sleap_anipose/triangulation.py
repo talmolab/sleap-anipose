@@ -163,6 +163,15 @@ def triangulate(
 )
 @click.option("--calib", help="Path pointing to the calibration file.")
 @click.option(
+    "--frames",
+    default=(),
+    help=(
+        "A tuple structured as (start_frame, "
+        "end_frame) containing the frame range to triangulate. The range is (inclusive,"
+        " exclusive) and will be entire video if not otherwise specified."
+    ),
+)
+@click.option(
     "--fname",
     default="",
     help=(
@@ -226,6 +235,7 @@ def triangulate(
 def triangulate_cli(
     p2d: str,
     calib: str,
+    frames: Tuple[int] = (),
     fname: str = "",
     disp_progress: bool = False,
     constraints: List[List[int]] = None,
@@ -241,6 +251,7 @@ def triangulate_cli(
     return triangulate(
         p2d,
         calib,
+        frames,
         fname,
         disp_progress,
         constraints=constraints,
