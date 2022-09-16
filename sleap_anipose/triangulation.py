@@ -30,7 +30,9 @@ def load_view(view: str, frames: Tuple[int] = ()) -> np.ndarray:
         return track
 
 
-def load_tracks(session: str, frames: Tuple[int] = ()) -> np.ndarray:
+def load_tracks(
+    session: str, frames: Tuple[int] = (), excluded_views: Tuple[str] = ()
+) -> np.ndarray:
     """Load all view tracks for a session folder.
 
     Args:
@@ -39,11 +41,17 @@ def load_tracks(session: str, frames: Tuple[int] = ()) -> np.ndarray:
         frames: A tuple structured as (start_frame, end_frame) containing the frame
             range to load from each video. The range is (inclusive, exclusive) and will
             be considered as the entire video if not otherwise specified.
+        excluded_views: Names (not paths) of camera views to be excluded. If non given,
+            all views will be used.
 
     Returns:
         A (n_views, n_frames, n_tracks, n_nodes, 2) shape ndarray of the tracks.
     """
-    views = [x for x in Path(session).iterdir() if x.is_dir()]
+    views = [
+        x
+        for x in Path(session).iterdir()
+        if x.is_dir() and x.name not in excluded_views
+    ]
     tracks = np.stack([load_view(view, frames) for view in views], axis=0)
     return tracks
 
@@ -52,6 +60,7 @@ def triangulate(
     p2d: Union[np.ndarray, str],
     calib: Union[CameraGroup, str],
     frames: Tuple[int] = (),
+    excluded_views: Tuple[str] = (),
     fname: str = "",
     disp_progress: bool = False,
     **kwargs,
@@ -69,6 +78,9 @@ def triangulate(
         frames: A tuple structured as (start_frame, end_frame) containing the frame
             range to triangulate. The range is (inclusive, exclusive) and will be
             considered as the entire video if not otherwise specified.
+        excluded_views: Names (not paths) of camera views to be excluded from
+            triangulation. If non given, all views will be used. Note that these views
+            must have also been excluded from the calibration.
         fname: The file path to save the triangulated points to (must end in .h5). Will
             not save unless a non-empty string is given.
         disp_progress: A flag determining whether or not to show triangulation
@@ -99,7 +111,7 @@ def triangulate(
         3D points.
     """
     if type(p2d) == str:
-        points_2d = load_tracks(p2d, frames)
+        points_2d = load_tracks(p2d, frames, excluded_views)
     else:
         if frames:
             points_2d = p2d.copy()[frames[0], frames[1]]
@@ -152,6 +164,17 @@ def triangulate(
                 f["frames"].attrs[
                     "Description"
                 ] = "Range, inclusive to exclusive, of frames triangulated over."
+
+            if excluded_views:
+                f.create_dataset(
+                    "excluded_views",
+                    data=excluded_views,
+                    compression="gzip",
+                    compression_opts=1,
+                )
+                f["excluded_views"].attrs[
+                    "Description"
+                ] = "Views that were excluded in triangulation."
 
     return points_3d
 

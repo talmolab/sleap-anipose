@@ -222,29 +222,49 @@ def get_metadata(
     return metadata
 
 
-def make_calibration_videos(session: str):
+# def make_calibration_videos(session: str):
+#     """Generate movies from calibration board images.
+
+#     Args:
+#         session: Path pointing to the session with the calibration board images.
+#     """
+#     cams = [x for x in Path(session).iterdir() if x.is_dir()]
+
+#     for cam in cams:
+
+#         # TODO: add different movie extension functionality
+#         fname = (
+#             cam
+#             / "calibration_images"
+#             / f"{Path(session).name}-{cam.name}-calibration.MOV"
+#         )
+#         calibration_imgs = list(cam.glob("*/*.jpg"))
+#         writer = imageio.get_writer(fname, fps=30)
+
+#         for img in calibration_imgs:
+#             writer.append_data(imageio.imread(img))
+
+#         writer.close()
+
+
+def make_calibration_videos(view: str):
     """Generate movies from calibration board images.
 
     Args:
-        session: Path pointing to the session with the calibration board images.
+        view: Path pointing to the view subfolder with the calibration board images.
     """
-    cams = [x for x in Path(session).iterdir() if x.is_dir()]
+    # cams = [x for x in Path(session).iterdir() if x.is_dir()]
 
-    for cam in cams:
+    session_name = Path(view).parent.name
+    # TODO: add different movie extension functionality
+    fname = view / "calibration_images" / f"{session_name}-{view.name}-calibration.MOV"
+    calibration_imgs = list(Path(view).glob("*/*.jpg"))
+    writer = imageio.get_writer(fname, fps=30)
 
-        # TODO: add different movie extension functionality
-        fname = (
-            cam
-            / "calibration_images"
-            / f"{Path(session).name}-{cam.name}-calibration.MOV"
-        )
-        calibration_imgs = list(cam.glob("*/*.jpg"))
-        writer = imageio.get_writer(fname, fps=30)
+    for img in calibration_imgs:
+        writer.append(imageio.imread(img))
 
-        for img in calibration_imgs:
-            writer.append_data(imageio.imread(img))
-
-        writer.close()
+    writer.close()
 
 
 @click.command()
@@ -469,6 +489,7 @@ def draw_board_cli(
 def calibrate(
     session: str,
     board: Union[str, CharucoBoard, Dict],
+    excluded_views: Tuple[str] = (),
     calib_fname: str = "",
     metadata_fname: str = "",
     histogram_path: str = "",
@@ -488,6 +509,8 @@ def calibrate(
                     square length.
                 'marker_bits': Number of bits encoded in the marker images.
                 'dict_size': Size of the dictionary used for marker encoding.
+        excluded_views: Names (not paths) of camera views to be excluded from
+            calibration. If non given, all views will be used.
         calib_fname: File path to save the calibration to (must end in .toml). Will not
             save unless a non-empty string is given.
         metadata_fname: File path to save the calibration metadata to (must end in .h5).
@@ -510,15 +533,20 @@ def calibrate(
             reprojections: A (n_cams, n_frames, n_corners, 2) array of the
                 reprojected calibration board corners.
     """
-    board_vids = [x.as_posix() for x in Path(session).rglob("*.MOV")]
-
-    if len(board_vids) == 0:
-        make_calibration_videos(session)
-
-    board_vids = [[x.as_posix()] for x in Path(session).rglob("*.MOV")]
-
-    cam_names = [x.name for x in Path(session).iterdir() if x.is_dir()]
+    cams = [
+        x
+        for x in Path(session).iterdir()
+        if x.is_dir() and x.name not in excluded_views
+    ]
+    cam_names = [x.name for x in cams]
     cgroup = CameraGroup.from_names(cam_names)
+
+    calib_videos = []
+    for cam in cams:
+        calib_video = list(cam.glob("*/*.MOV"))
+        if not calib_video:
+            make_calibration_videos(cam.as_posix())
+        calib_videos.append(calib_video)
 
     if type(board) == str:
         calib_board = read_board(board)
@@ -534,16 +562,17 @@ def calibrate(
             board["dict_size"],
         )
 
-    _, corners = cgroup.calibrate_videos(board_vids, calib_board)
+    _, corners = cgroup.calibrate_videos(calib_videos, calib_board)
     frames, detections, triangulations, reprojections = get_metadata(
         corners, cgroup, metadata_fname
     )
 
     make_histogram(detections, reprojections, histogram_path)
 
-    make_reproj_imgs(
-        detections, reprojections, frames, session, n_samples=4, save_path=reproj_path
-    )
+    # TODO: make reprojection images work with excluded views
+    # make_reproj_imgs(
+    #     detections, reprojections, frames, session, n_samples=4, save_path=reproj_path
+    # )
 
     if len(calib_fname) > 0:
         cgroup.dump(calib_fname)
