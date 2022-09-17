@@ -153,9 +153,17 @@ def triangulate(
                 compression="gzip",
                 compression_opts=1,
             )
-            f["tracks"].attrs[
-                "Description"
-            ] = "Shape: (n_frames, n_tracks, n_nodes, 3)."
+
+            if type(p2d) == str:
+                cam_names = [
+                    x.name
+                    for x in p2d.iterdir()
+                    if x.is_dir() and x.name not in excluded_views
+                ]
+                tracks_descriptor = f"Shape: (n_frames, n_tracks, n_nodes, 3). Camera views used: {cam_names}"
+            else:
+                tracks_descriptor = "Shape: (n_frames, n_tracks, n_nodes, 3)."
+            f["tracks"].attrs["Description"] = tracks_descriptor
 
             if frames:
                 f.create_dataset(
@@ -164,17 +172,6 @@ def triangulate(
                 f["frames"].attrs[
                     "Description"
                 ] = "Range, inclusive to exclusive, of frames triangulated over."
-
-            if excluded_views:
-                f.create_dataset(
-                    "excluded_views",
-                    data=excluded_views,
-                    compression="gzip",
-                    compression_opts=1,
-                )
-                f["excluded_views"].attrs[
-                    "Description"
-                ] = "Views that were excluded in triangulation."
 
     return points_3d
 
