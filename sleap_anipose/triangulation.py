@@ -288,80 +288,81 @@ def triangulate_cli(
     )
 
 
-def reproject(
-    p3d: Union[np.ndarray, str],
-    calib: Union[CameraGroup, str],
-    save: bool = False,
-    session: str = ".",
-) -> np.ndarray:
-    """Reproject triangulated points to each camera's view.
+# TODO: Fix reprojection to work with excluded camera views
+# def reproject(
+#     p3d: Union[np.ndarray, str],
+#     calib: Union[CameraGroup, str],
+#     save: bool = False,
+#     session: str = ".",
+# ) -> np.ndarray:
+#     """Reproject triangulated points to each camera's view.
 
-    Args:
-        p3d: A (n_frames, n_tracks, n_nodes, 3) array of the triangulated 3D
-            points or the path pointing to the h5 file containing the points.
-        calib: An object containing all the camera calibration data or the path
-            pointing to its saved file. The order of the cameras in this object
-            determines the order of the reprojections along the cameras axis.
-        save: A flag determining whether or not to save the reprojections.
-        session: Path to the session containing the 3D points and calibration,
-            assumed to be the working directory if not specified.
+#     Args:
+#         p3d: A (n_frames, n_tracks, n_nodes, 3) array of the triangulated 3D
+#             points or the path pointing to the h5 file containing the points.
+#         calib: An object containing all the camera calibration data or the path
+#             pointing to its saved file. The order of the cameras in this object
+#             determines the order of the reprojections along the cameras axis.
+#         save: A flag determining whether or not to save the reprojections.
+#         session: Path to the session containing the 3D points and calibration,
+#             assumed to be the working directory if not specified.
 
-    Returns:
-        A (n_cams, n_frames, n_tracks, n_nodes, 2) ndarray of the reprojections
-        for each camera view. If the save flag is true, a (n_frames, n_tracks,
-        n_nodes, 2) array of the corresponding reprojections will be saved to
-        each view under the name 'reprojections.h5'.
-    """
-    if type(p3d) == str:
-        with h5py.File(p3d, "r") as f:
-            points = f["tracks"][:]
-    else:
-        points = p3d.copy()
+#     Returns:
+#         A (n_cams, n_frames, n_tracks, n_nodes, 2) ndarray of the reprojections
+#         for each camera view. If the save flag is true, a (n_frames, n_tracks,
+#         n_nodes, 2) array of the corresponding reprojections will be saved to
+#         each view under the name 'reprojections.h5'.
+#     """
+#     if type(p3d) == str:
+#         with h5py.File(p3d, "r") as f:
+#             points = f["tracks"][:]
+#     else:
+#         points = p3d.copy()
 
-    if type(calib) == str:
-        cgroup = CameraGroup.load(calib)
-    else:
-        cgroup = calib
+#     if type(calib) == str:
+#         cgroup = CameraGroup.load(calib)
+#     else:
+#         cgroup = calib
 
-    n_frames, n_tracks, n_nodes, _ = points.shape
-    cams = cgroup.get_names()
+#     n_frames, n_tracks, n_nodes, _ = points.shape
+#     cams = cgroup.get_names()
 
-    reprojections = cgroup.project(p3d.reshape((-1, 3))).reshape(
-        (len(cams), n_frames, n_tracks, n_nodes, 2)
-    )
+#     reprojections = cgroup.project(p3d.reshape((-1, 3))).reshape(
+#         (len(cams), n_frames, n_tracks, n_nodes, 2)
+#     )
 
-    if save:
-        for i, cam in enumerate(cams):
-            fname = Path(session) / cam / "reprojections.h5"
-            with h5py.File(fname, "w") as f:
-                f.create_dataset(
-                    "tracks",
-                    data=reprojections[i],
-                    chunks=True,
-                    compression="gzip",
-                    compression_opts=1,
-                )
-                f["tracks"].attrs[
-                    "Description"
-                ] = f"Shape: (n_frames, n_tracks, n_nodes, 2). View: {cam}"
+#     if save:
+#         for i, cam in enumerate(cams):
+#             fname = Path(session) / cam / "reprojections.h5"
+#             with h5py.File(fname, "w") as f:
+#                 f.create_dataset(
+#                     "tracks",
+#                     data=reprojections[i],
+#                     chunks=True,
+#                     compression="gzip",
+#                     compression_opts=1,
+#                 )
+#                 f["tracks"].attrs[
+#                     "Description"
+#                 ] = f"Shape: (n_frames, n_tracks, n_nodes, 2). View: {cam}"
 
-    return reprojections
+#     return reprojections
 
 
-@click.command()
-@click.option("--p3d", help="Path pointing to the points_3d.h5 file.")
-@click.option("--calib", help="Path pointing to the calibration.toml file.")
-@click.option(
-    "--save",
-    default=False,
-    help="Flag determining whether or not to save the reprojections.",
-)
-@click.option("--session", default=".", help="Path to save the reprojections to.")
-def reproject_cli(
-    p3d: str,
-    calib: str,
-    save: bool = False,
-    session: str = ".",
-) -> np.ndarray:
-    """Reproject 3D points to different camera views from the CLI."""
-    return reproject(p3d, calib, save, session)
+# @click.command()
+# @click.option("--p3d", help="Path pointing to the points_3d.h5 file.")
+# @click.option("--calib", help="Path pointing to the calibration.toml file.")
+# @click.option(
+#     "--save",
+#     default=False,
+#     help="Flag determining whether or not to save the reprojections.",
+# )
+# @click.option("--session", default=".", help="Path to save the reprojections to.")
+# def reproject_cli(
+#     p3d: str,
+#     calib: str,
+#     save: bool = False,
+#     session: str = ".",
+# ) -> np.ndarray:
+#     """Reproject 3D points to different camera views from the CLI."""
+#     return reproject(p3d, calib, save, session)
