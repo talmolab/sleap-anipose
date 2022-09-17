@@ -546,7 +546,7 @@ def calibrate(
         calib_video = list(cam.glob("*/*.MOV"))
         if not calib_video:
             make_calibration_videos(cam.as_posix())
-        calib_videos.append(calib_video)
+        calib_videos.append([calib_video[0].as_posix()])
 
     if type(board) == str:
         calib_board = read_board(board)
