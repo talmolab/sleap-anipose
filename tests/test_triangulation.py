@@ -37,10 +37,8 @@ def test_triangulate(
     with h5py.File(fname, "r") as f:
         loaded_p3d = f["tracks"][:]
         loaded_frames = f["frames"][:]
-        loaded_exclusions = f["excluded_views"][:]
     assert np.all(loaded_p3d == p3d)
     assert np.all(loaded_frames == frames)
-    assert np.all(loaded_exclusions == excluded_views)
 
 
 # TODO: fix reprojection to deal with excluded views
