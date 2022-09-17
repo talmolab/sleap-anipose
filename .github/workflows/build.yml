@@ -1,0 +1,36 @@
+# Package builds
+name: Build
+
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  pypi:
+    name: PyPI Wheel
+    runs-on: "ubuntu-22.04"
+    steps:
+
+    - name: Checkout repo
+      uses: actions/checkout@v3.0.2
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.8
+
+    - name: Install dependencies
+      run: |
+        pip install --editable .[dev]
+
+    - name: Build wheel
+      run: |
+        python -m build --wheel
+        twine check dist/*
+    
+    - name: Upload
+      env:
+        PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
+      run: |
+        twine upload -u __token__ -p "$PYPI_TOKEN" dist/* --non-interactive --skip-existing --disable-progress-bar

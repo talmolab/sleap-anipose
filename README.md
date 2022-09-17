@@ -3,6 +3,8 @@
 [![CI](https://github.com/talmolab/sleap-anipose/actions/workflows/ci.yml/badge.svg)](https://github.com/talmolab/sleap-anipose/actions/workflows/ci.yml)
 [![Lint](https://github.com/talmolab/sleap-anipose/actions/workflows/lint.yml/badge.svg)](https://github.com/talmolab/sleap-anipose/actions/workflows/lint.yml)
 [![codecov](https://codecov.io/gh/talmolab/sleap-anipose/branch/main/graph/badge.svg)](https://codecov.io/gh/talmolab/sleap-anipose)
+[![Release](https://img.shields.io/github/v/release/talmolab/sleap-anipose?label=Latest)](https://github.com/talmolab/sleap-anipose/releases/)
+[![PyPI](https://img.shields.io/pypi/v/sleap-anipose?label=PyPI)](https://pypi.org/project/sleap-anipose)
 
 SLEAP to Anipose triangulation pipeline for 3D multi-animal pose tracking.
 
