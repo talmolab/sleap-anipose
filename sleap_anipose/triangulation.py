@@ -157,7 +157,7 @@ def triangulate(
             if type(p2d) == str:
                 cam_names = [
                     x.name
-                    for x in p2d.iterdir()
+                    for x in Path(p2d).iterdir()
                     if x.is_dir() and x.name not in excluded_views
                 ]
                 tracks_descriptor = f"Shape: (n_frames, n_tracks, n_nodes, 3). Camera views used: {cam_names}"
