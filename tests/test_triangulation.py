@@ -8,7 +8,7 @@ import h5py
 import pytest
 
 
-@pytest.parametrize("frames,excluded_views", [((25, 75), ("side",))])
+@pytest.mark.parametrize("frames,excluded_views", [((25, 75), ("side",))])
 def test_triangulate(minimal_session, tmp_path, frames, excluded_views):
     calibration = Path(minimal_session) / "calibration.toml"
     assert calibration.exists()
@@ -57,7 +57,7 @@ def test_reproject(minimal_session):
     assert p2d.shape[-1] == 2
 
 
-@pytest.parametrize("frames,excluded_views", [((25, 75), ("side",))])
+@pytest.mark.parametrize("frames,excluded_views", [((25, 75), ("side",))])
 def test_load_tracks(minimal_session, frames, excluded_views):
     p2d = load_tracks(minimal_session, frames, excluded_views)
     cams = [
@@ -70,7 +70,7 @@ def test_load_tracks(minimal_session, frames, excluded_views):
     assert p2d.shape[-1] == 2
 
 
-@pytest.parametrize("frames", [((25, 75))])
+@pytest.mark.parametrize("frames", [((25, 75))])
 def test_load_view(minimal_session, frames):
     cams = [x.as_posix() for x in Path(minimal_session).iterdir() if x.is_dir()]
     shapes = []
