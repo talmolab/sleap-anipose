@@ -49,6 +49,7 @@ def make_reproj_imgs(
     reprojections: np.ndarray,
     frames: List[int],
     session: str,
+    excluded_views: Tuple[str] = (),
     n_samples=4,
     save_path: str = "",
 ):
@@ -63,12 +64,19 @@ def make_reproj_imgs(
             These frames are used for triangulation and saved in metadata.
         session: Path containing the view subfolders with the calibration board
             images.
+        excluded_views: Names (not paths) of camera views to be excluded from
+            reprojection. These views must have also been excluded from calibration.
+            If not given, all views will be used.
         n_samples: The number of images to make per view.
         save_path: The session to save the images to. If not specified as a non-empty
             string, images will not be saved. Images are saved to the view subfolders in
             this folder as 'save_path / view / reprojection-{frame}.png'.
     """
-    cam_folders = [x for x in Path(session).iterdir() if x.is_dir()]
+    cam_folders = [
+        x
+        for x in Path(session).iterdir()
+        if x.is_dir() and x.name not in excluded_views
+    ]
     sampled_frames = sample(frames, n_samples)
 
     for i, cam in enumerate(cam_folders):
@@ -220,31 +228,6 @@ def get_metadata(
 
     metadata = (common_frames, common_corners, corners_3d, corners_reproj)
     return metadata
-
-
-# def make_calibration_videos(session: str):
-#     """Generate movies from calibration board images.
-
-#     Args:
-#         session: Path pointing to the session with the calibration board images.
-#     """
-#     cams = [x for x in Path(session).iterdir() if x.is_dir()]
-
-#     for cam in cams:
-
-#         # TODO: add different movie extension functionality
-#         fname = (
-#             cam
-#             / "calibration_images"
-#             / f"{Path(session).name}-{cam.name}-calibration.MOV"
-#         )
-#         calibration_imgs = list(cam.glob("*/*.jpg"))
-#         writer = imageio.get_writer(fname, fps=30)
-
-#         for img in calibration_imgs:
-#             writer.append_data(imageio.imread(img))
-
-#         writer.close()
 
 
 def make_calibration_videos(view: str):
@@ -510,7 +493,7 @@ def calibrate(
                 'marker_bits': Number of bits encoded in the marker images.
                 'dict_size': Size of the dictionary used for marker encoding.
         excluded_views: Names (not paths) of camera views to be excluded from
-            calibration. If non given, all views will be used.
+            calibration. If not given, all views will be used.
         calib_fname: File path to save the calibration to (must end in .toml). Will not
             save unless a non-empty string is given.
         metadata_fname: File path to save the calibration metadata to (must end in .h5).
@@ -569,10 +552,15 @@ def calibrate(
 
     make_histogram(detections, reprojections, histogram_path)
 
-    # TODO: make reprojection images work with excluded views
-    # make_reproj_imgs(
-    #     detections, reprojections, frames, session, n_samples=4, save_path=reproj_path
-    # )
+    make_reproj_imgs(
+        detections,
+        reprojections,
+        frames,
+        session,
+        excluded_views,
+        n_samples=4,
+        save_path=reproj_path,
+    )
 
     if len(calib_fname) > 0:
         cgroup.dump(calib_fname)
