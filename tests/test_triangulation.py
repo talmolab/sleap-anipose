@@ -70,7 +70,7 @@ def test_load_tracks(minimal_session, frames, excluded_views):
     assert p2d.shape[-1] == 2
 
 
-@pytest.mark.parametrize("frames", [((25, 75),)])
+@pytest.mark.parametrize("frames", [((25, 75))])
 def test_load_view(minimal_session, frames):
     cams = [x.as_posix() for x in Path(minimal_session).iterdir() if x.is_dir()]
     shapes = []
