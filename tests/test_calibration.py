@@ -6,9 +6,11 @@ from pathlib import Path
 from aniposelib.cameras import CameraGroup
 import h5py
 import toml
+import pytest
 
 
-def test_calibrate(minimal_session, tmp_path, excluded_views=("side")):
+@pytest.parameterize("excluded_views", [(("side",))])
+def test_calibrate(minimal_session, tmp_path, excluded_views):
     board = read_board((Path(minimal_session) / "board.toml").as_posix())
     tmp_calib = tmp_path / "calibration"
     tmp_calib.mkdir()
@@ -48,7 +50,8 @@ def test_calibrate(minimal_session, tmp_path, excluded_views=("side")):
         assert np.all(tvecs[i] == loaded_tvecs[i])
 
 
-def test_get_metadata(minimal_session, tmp_path, excluded_views=("side")):
+@pytest.parameterize("excluded_views", [(("side",))])
+def test_get_metadata(minimal_session, tmp_path, excluded_views):
     cams = [
         x
         for x in Path(minimal_session).iterdir()

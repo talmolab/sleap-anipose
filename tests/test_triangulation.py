@@ -5,11 +5,11 @@ from pathlib import Path
 from aniposelib.cameras import CameraGroup
 import numpy as np
 import h5py
+import pytest
 
 
-def test_triangulate(
-    minimal_session, tmp_path, frames=(25, 75), excluded_views=("side")
-):
+@pytest.parameterize("frames,excluded_views", [((25, 75), ("side",))])
+def test_triangulate(minimal_session, tmp_path, frames, excluded_views):
     calibration = Path(minimal_session) / "calibration.toml"
     assert calibration.exists()
 
@@ -57,7 +57,8 @@ def test_reproject(minimal_session):
     assert p2d.shape[-1] == 2
 
 
-def test_load_tracks(minimal_session, frames=(25, 75), excluded_views=("side")):
+@pytest.parameterize("frames,excluded_views", [((25, 75), ("side",))])
+def test_load_tracks(minimal_session, frames, excluded_views):
     p2d = load_tracks(minimal_session, frames, excluded_views)
     cams = [
         x.name
@@ -69,7 +70,8 @@ def test_load_tracks(minimal_session, frames=(25, 75), excluded_views=("side")):
     assert p2d.shape[-1] == 2
 
 
-def test_load_view(minimal_session, frames=(25, 75)):
+@pytest.parameterize("frames", [((25, 75))])
+def test_load_view(minimal_session, frames):
     cams = [x.as_posix() for x in Path(minimal_session).iterdir() if x.is_dir()]
     shapes = []
     for cam in cams:

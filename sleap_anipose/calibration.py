@@ -236,8 +236,6 @@ def make_calibration_videos(view: str):
     Args:
         view: Path pointing to the view subfolder with the calibration board images.
     """
-    # cams = [x for x in Path(session).iterdir() if x.is_dir()]
-
     session_name = Path(view).parent.name
     # TODO: add different movie extension functionality
     fname = view / "calibration_images" / f"{session_name}-{view.name}-calibration.MOV"
