@@ -9,7 +9,7 @@ import toml
 import pytest
 
 
-@pytest.mark.parametrize("excluded_views", [(("side",),)])
+@pytest.mark.parametrize("excluded_views", [("side",)])
 def test_calibrate(minimal_session, tmp_path, excluded_views):
     board = read_board((Path(minimal_session) / "board.toml").as_posix())
     tmp_calib = tmp_path / "calibration"
@@ -50,7 +50,7 @@ def test_calibrate(minimal_session, tmp_path, excluded_views):
         assert np.all(tvecs[i] == loaded_tvecs[i])
 
 
-@pytest.mark.parametrize("excluded_views", [(("side",),)])
+@pytest.mark.parametrize("excluded_views", [("side",)])
 def test_get_metadata(minimal_session, tmp_path, excluded_views):
     cams = [
         x
