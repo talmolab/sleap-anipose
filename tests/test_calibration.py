@@ -6,14 +6,23 @@ from pathlib import Path
 from aniposelib.cameras import CameraGroup
 import h5py
 import toml
+import pytest
 
 
-def test_calibrate(minimal_session, tmp_path):
+@pytest.mark.parametrize("excluded_views", [("side",)])
+def test_calibrate(minimal_session, tmp_path, excluded_views):
     board = read_board((Path(minimal_session) / "board.toml").as_posix())
-    cgroup, _ = calibrate(minimal_session, board)
+    tmp_calib = tmp_path / "calibration"
+    tmp_calib.mkdir()
+    save_path = (tmp_calib / "calibration.toml").as_posix()
+    cgroup, _ = calibrate(minimal_session, board, excluded_views, save_path)
 
     # Testing the basics of the calibration.
-    cam_names = [x.name for x in Path(minimal_session).iterdir() if x.is_dir()]
+    cam_names = [
+        x.name
+        for x in Path(minimal_session).iterdir()
+        if x.is_dir() and x.name not in excluded_views
+    ]
     assert cgroup.get_names() == cam_names
 
     # Testing the shapes of the output matrices.
@@ -27,10 +36,7 @@ def test_calibrate(minimal_session, tmp_path):
         assert len(t) == 3
 
     # Testing the saving functionality.
-    tmp_calib = tmp_path / "calibration"
-    tmp_calib.mkdir()
-    cgroup.dump(tmp_calib / "calibration.toml")
-    loaded_cgroup = CameraGroup.load(tmp_calib / "calibration.toml")
+    loaded_cgroup = CameraGroup.load(save_path)
 
     assert loaded_cgroup.get_names() == cgroup.get_names()
 
@@ -44,11 +50,16 @@ def test_calibrate(minimal_session, tmp_path):
         assert np.all(tvecs[i] == loaded_tvecs[i])
 
 
-def test_get_metadata(minimal_session, tmp_path):
-    cam_names = [x.name for x in Path(minimal_session).iterdir() if x.is_dir()]
-    cgroup = CameraGroup.from_names(cam_names)
+@pytest.mark.parametrize("excluded_views", [("side",)])
+def test_get_metadata(minimal_session, tmp_path, excluded_views):
+    cams = [
+        x
+        for x in Path(minimal_session).iterdir()
+        if x.is_dir() and x.name not in excluded_views
+    ]
+    cgroup = CameraGroup.from_names([x.name for x in cams])
 
-    board_vids = [[x.as_posix()] for x in list(Path(minimal_session).rglob("*.MOV"))]
+    board_vids = [[list(cam.glob("*/*.MOV"))[0].as_posix()] for cam in cams]
     board = read_board((Path(minimal_session) / "board.toml").as_posix())
 
     tmp_calib = tmp_path / "calib_meta"
@@ -67,7 +78,7 @@ def test_get_metadata(minimal_session, tmp_path):
     board_width, board_height = board.get_size()
     n_frames = len(frames)
     n_corners = (board_height - 1) * (board_width - 1)
-    n_cams = len(cam_names)
+    n_cams = len(cams)
 
     assert detections.shape == (n_cams, n_frames, n_corners, 2)
     assert triangulations.shape == (n_frames, n_corners, 3)
@@ -125,19 +136,3 @@ def test_write_board(tmp_path):
         dict_size,
     )
     assert Path(board_path).exists()
-
-
-# def test_make_histogram():
-#     pass
-#
-# def test_make_reproj_imgs():
-#     pass
-
-
-# def test_make_calibration_videos(minimal_session, tmp_path):
-#     video_folder = tmp_path / 'calib_videos'
-#     video_folder.mkdir()
-
-#     cam_folders = [x for x in minimal_session.iterdir() if x.is_dir()]
-
-#     for cam in cam_folders:
