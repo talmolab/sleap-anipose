@@ -133,19 +133,3 @@ def test_write_board(tmp_path):
         dict_size,
     )
     assert Path(board_path).exists()
-
-
-# def test_make_histogram():
-#     pass
-#
-# def test_make_reproj_imgs():
-#     pass
-
-
-# def test_make_calibration_videos(minimal_session, tmp_path):
-#     video_folder = tmp_path / 'calib_videos'
-#     video_folder.mkdir()
-
-#     cam_folders = [x for x in minimal_session.iterdir() if x.is_dir()]
-
-#     for cam in cam_folders:

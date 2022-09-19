@@ -41,21 +41,20 @@ def test_triangulate(
     assert np.all(loaded_frames == frames)
 
 
-# TODO: fix reprojection to deal with excluded views
-# def test_reproject(minimal_session):
-#     assert (Path(minimal_session) / "points3d.h5").exists()
-#     with h5py.File(Path(minimal_session) / "points3d.h5", "r") as f:
-#         p3d = f["tracks"][:]
-#     assert (Path(minimal_session) / "calibration.toml").exists()
-#     cgroup = CameraGroup.load(Path(minimal_session) / "calibration.toml")
+def test_reproject(minimal_session):
+    assert (Path(minimal_session) / "points3d.h5").exists()
+    with h5py.File(Path(minimal_session) / "points3d.h5", "r") as f:
+        p3d = f["tracks"][:]
+    assert (Path(minimal_session) / "calibration.toml").exists()
+    cgroup = CameraGroup.load(Path(minimal_session) / "calibration.toml")
 
-#     cams = [x for x in Path(minimal_session).iterdir() if x.is_dir()]
-#     n_cams = len(cams)
+    cams = cgroup.get_names()
+    n_cams = len(cams)
 
-#     p2d = reproject(p3d, cgroup)
+    p2d = reproject(p3d, cgroup)
 
-#     assert p2d.shape[0] == n_cams
-#     assert p2d.shape[-1] == 2
+    assert p2d.shape[0] == n_cams
+    assert p2d.shape[-1] == 2
 
 
 def test_load_tracks(minimal_session, frames=(25, 75), excluded_views=("side")):
