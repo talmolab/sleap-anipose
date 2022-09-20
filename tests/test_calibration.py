@@ -112,7 +112,7 @@ def test_read_board(minimal_session):
     board = read_board(board_path.as_posix())
     file_dict = toml.load(board_path)
 
-    assert board.get_size() == (file_dict["board_width"], file_dict["board_height"])
+    assert board.get_size() == (file_dict["board_x"], file_dict["board_y"])
     assert board.get_square_length() == file_dict["square_length"]
 
 
@@ -120,16 +120,16 @@ def test_write_board(tmp_path):
     tmp_board = tmp_path / "boards"
     tmp_board.mkdir()
     board_path = (tmp_board / "board.toml").as_posix()
-    board_width = 0
-    board_height = 0
+    board_x = 0
+    board_y = 0
     square_length = 0.0
     marker_length = 0.0
     marker_bits = 0
     dict_size = 0
     write_board(
         board_path,
-        board_width,
-        board_height,
+        board_x,
+        board_y,
         square_length,
         marker_length,
         marker_bits,
