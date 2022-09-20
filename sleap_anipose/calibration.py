@@ -268,8 +268,8 @@ def read_board(board_file: str):
     """
     board_dict = toml.load(board_file)
     board = CharucoBoard(
-        board_dict["board_width"],
-        board_dict["board_height"],
+        board_dict["board_x"],
+        board_dict["board_y"],
         board_dict["square_length"],
         board_dict["marker_length"],
         board_dict["marker_bits"],
@@ -287,8 +287,8 @@ def read_board_cli(board_file: str):
 
 def write_board(
     board_name: str,
-    board_X: int,
-    board_Y: int,
+    board_x: int,
+    board_y: int,
     square_length: float,
     marker_length: float,
     marker_bits: int,
@@ -298,8 +298,8 @@ def write_board(
 
     Args:
         board_name: File name to save the board as.
-        board_X: Number of squares along the width of the board.
-        board_Y: Number of squares along the height of the board.
+        board_x: Number of squares along the width of the board.
+        board_y: Number of squares along the height of the board.
         square_length: Length of square edge in any measured units.
         marker_length: Length of marker edge in the same measured units as the
             square length.
@@ -307,8 +307,8 @@ def write_board(
         dict_size: Size of the dictionary used for marker encoding.
     """
     board_dict = {
-        "board_X": board_X,
-        "board_Y": board_Y,
+        "board_x": board_x,
+        "board_y": board_y,
         "square_length": square_length,
         "marker_length": marker_length,
         "marker_bits": marker_bits,
@@ -320,8 +320,8 @@ def write_board(
 
 @click.command()
 @click.option("--board_name", help="File name to save the board as.")
-@click.option("--board_X", help="Number of squares along the width of the board.")
-@click.option("--board_Y", help="Number of squares along the height of the board.")
+@click.option("--board_x", help="Number of squares along the width of the board.")
+@click.option("--board_y", help="Number of squares along the height of the board.")
 @click.option("--square_length", help="Length of square edge in any units.")
 @click.option(
     "--marker_length", help="Length of marker edge in same units as square length."
@@ -330,8 +330,8 @@ def write_board(
 @click.option("--dict_size", help="Size of dictionary used for marking encoding.")
 def write_board_cli(
     board_name: str,
-    board_X: int,
-    board_Y: int,
+    board_x: int,
+    board_y: int,
     square_length: float,
     marker_length: float,
     marker_bits: int,
@@ -340,8 +340,8 @@ def write_board_cli(
     """Write a calibration board .toml file from the CLI."""
     write_board(
         board_name,
-        board_X,
-        board_Y,
+        board_x,
+        board_y,
         square_length,
         marker_length,
         marker_bits,
@@ -351,8 +351,8 @@ def write_board_cli(
 
 def draw_board(
     board_name: str,
-    board_X: int,
-    board_Y: int,
+    board_x: int,
+    board_y: int,
     square_length: float,
     marker_length: float,
     marker_bits: int,
@@ -365,8 +365,8 @@ def draw_board(
 
     Args:
         board_name: Path to save the file to.
-        board_X: Number of squares along the width of the board.
-        board_Y: Number of squares along with height of the board.
+        board_x: Number of squares along the width of the board.
+        board_y: Number of squares along with height of the board.
         square_length: Length of square edges in meters.
         marker_length: Length of marker edges in meters.
         marker_bits: Number of bits in aruco markers.
@@ -401,7 +401,7 @@ def draw_board(
         aruco_dict = ARUCO_DICTS[(marker_bits, dict_size)]
 
     charuco_board = aruco.CharucoBoard_create(
-        board_X, board_Y, square_length, marker_length, aruco_dict
+        board_x, board_y, square_length, marker_length, aruco_dict
     )
 
     imboard = charuco_board.draw((img_width, img_height))
@@ -410,8 +410,8 @@ def draw_board(
     if len(save) > 0:
         write_board(
             save,
-            board_X,
-            board_Y,
+            board_x,
+            board_y,
             square_length,
             marker_length,
             marker_bits,
@@ -421,8 +421,8 @@ def draw_board(
 
 @click.command()
 @click.option("--board_name", help="Path to save the file to.")
-@click.option("--board_X", help="Number of squares along the width of the board.")
-@click.option("--board_Y", help="Number of squares along the height of the board.")
+@click.option("--board_x", help="Number of squares along the width of the board.")
+@click.option("--board_y", help="Number of squares along the height of the board.")
 @click.option("--square_length", help="Length of square edges in any units.")
 @click.option(
     "--marker_length", help=("Length of marker edges in the units of square " "length.")
@@ -442,8 +442,8 @@ def draw_board(
 )
 def draw_board_cli(
     save_folder: str,
-    board_X: int,
-    board_Y: int,
+    board_x: int,
+    board_y: int,
     square_length: float,
     marker_length: float,
     marker_bits: int,
@@ -455,8 +455,8 @@ def draw_board_cli(
     """Draw and save a printable calibration board jpg file from the CLI."""
     draw_board(
         save_folder,
-        board_X,
-        board_Y,
+        board_x,
+        board_y,
         square_length,
         marker_length,
         marker_bits,
