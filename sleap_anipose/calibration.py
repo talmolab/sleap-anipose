@@ -483,8 +483,8 @@ def calibrate(
             calibration board images in view subfolders.
         board: Either the path pointing to the board.toml file, the direct CharucoBoard
             object, or a dictionary with the following key / value pairs:
-                'board_width': Number of squares along the width of the board.
-                'board_height': Number of squares along the height of the board.
+                'board_x': Number of squares along the width of the board.
+                'board_y': Number of squares along the height of the board.
                 'square_length': Length of square edge in any measured units.
                 'marker_length': Length of marker edge in the same measured units as the
                     square length.
@@ -535,8 +535,8 @@ def calibrate(
         calib_board = board
     else:
         calib_board = CharucoBoard(
-            board["board_width"],
-            board["board_height"],
+            board["board_x"],
+            board["board_y"],
             board["square_length"],
             board["marker_length"],
             board["marker_bits"],
