@@ -13,6 +13,13 @@ SLEAP to Anipose triangulation pipeline for 3D multi-animal pose tracking.
 pip install sleap-anipose
 ```
 
+If you are using conda 
+```
+conda create -n sleap-anipose python=3.8
+conda activate sleap-anipose
+pip install sleap-anipose
+```
+
 ### Development
 For development, use the following syntax to install in editable mode:
 ```
