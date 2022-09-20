@@ -571,6 +571,11 @@ def calibrate(
 @click.option("--session", help="Path pointing to the session to calibrate.")
 @click.option("--board", help="Path pointing to the board.toml file.")
 @click.option(
+    "--excluded_views",
+    default=(),
+    help="Names (not paths) of camera views to be excluded from calibration. If not given, all views will be used.",
+)
+@click.option(
     "--calib_fname",
     default="",
     help=(
@@ -605,6 +610,7 @@ def calibrate(
 def calibrate_cli(
     session: str,
     board: str,
+    excluded_views: Tuple[str] = (),
     calib_fname: str = "",
     metadata_fname: str = "",
     histogram_path: str = "",
@@ -614,6 +620,7 @@ def calibrate_cli(
     return calibrate(
         session,
         board,
+        excluded_views,
         calib_fname,
         metadata_fname,
         histogram_path,
