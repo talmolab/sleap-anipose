@@ -1,5 +1,5 @@
-board_width = 8
-board_height = 11
+board_x = 8
+board_y = 11
 square_length = 24.0
 marker_length = 18.75
 marker_bits = 4
