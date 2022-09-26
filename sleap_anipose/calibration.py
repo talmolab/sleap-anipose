@@ -250,9 +250,12 @@ def make_calibration_videos(view: str):
 
 @click.command()
 @click.option(
-    "--session", help="Path pointing to the session with the calibration board images."
+    "--session",
+    required=True,
+    type=str,
+    help="Path pointing to the session with the calibration board images.",
 )
-def make_calibration_videos_cli(session: str):
+def make_calibration_videos_cli(session):
     """Generate movies from calibration board images from the CLI."""
     make_calibration_videos(session)
 
@@ -279,8 +282,13 @@ def read_board(board_file: str):
 
 
 @click.command()
-@click.option("--board_file", help="Path to the calibration board toml file.")
-def read_board_cli(board_file: str):
+@click.option(
+    "--board_file",
+    required=True,
+    type=str,
+    help="Path to the calibration board toml file.",
+)
+def read_board_cli(board_file):
     """Read toml file detailing the calibration board from the CLI."""
     return read_board(board_file)
 
@@ -306,6 +314,28 @@ def write_board(
         marker_bits: Number of bits encoded in the marker images.
         dict_size: Size of the dictionary used for marker encoding.
     """
+    ARUCO_DICTS = {
+        (4, 50): aruco.DICT_4X4_50,
+        (5, 50): aruco.DICT_5X5_50,
+        (6, 50): aruco.DICT_6X6_50,
+        (7, 50): aruco.DICT_7X7_50,
+        (4, 100): aruco.DICT_4X4_100,
+        (5, 100): aruco.DICT_5X5_100,
+        (6, 100): aruco.DICT_6X6_100,
+        (7, 100): aruco.DICT_7X7_100,
+        (4, 250): aruco.DICT_4X4_250,
+        (5, 250): aruco.DICT_5X5_250,
+        (6, 250): aruco.DICT_6X6_250,
+        (7, 250): aruco.DICT_7X7_250,
+        (4, 1000): aruco.DICT_4X4_1000,
+        (5, 1000): aruco.DICT_5X5_1000,
+        (6, 1000): aruco.DICT_6X6_1000,
+        (7, 1000): aruco.DICT_7X7_1000,
+    }
+
+    if (marker_bits, dict_size) not in ARUCO_DICTS.keys():
+        raise Exception("Invalid marker bits or dictionary size.")
+
     board_dict = {
         "board_x": board_x,
         "board_y": board_y,
@@ -319,23 +349,53 @@ def write_board(
 
 
 @click.command()
-@click.option("--board_name", help="File name to save the board as.")
-@click.option("--board_x", help="Number of squares along the width of the board.")
-@click.option("--board_y", help="Number of squares along the height of the board.")
-@click.option("--square_length", help="Length of square edge in any units.")
 @click.option(
-    "--marker_length", help="Length of marker edge in same units as square length."
+    "--board_name", required=True, type=str, help="File name to save the board as."
 )
-@click.option("--marker_bits", help="Number of bits encoded in the marker images.")
-@click.option("--dict_size", help="Size of dictionary used for marking encoding.")
+@click.option(
+    "--board_x",
+    required=True,
+    type=int,
+    help="Number of squares along the width of the board.",
+)
+@click.option(
+    "--board_y",
+    required=True,
+    type=int,
+    help="Number of squares along the height of the board.",
+)
+@click.option(
+    "--square_length",
+    required=True,
+    type=float,
+    help="Length of square edge in any units.",
+)
+@click.option(
+    "--marker_length",
+    required=True,
+    type=float,
+    help="Length of marker edge in same units as square length.",
+)
+@click.option(
+    "--marker_bits",
+    required=True,
+    type=int,
+    help="Number of bits encoded in the marker images.",
+)
+@click.option(
+    "--dict_size",
+    required=True,
+    type=int,
+    help="Size of dictionary used for marking encoding.",
+)
 def write_board_cli(
-    board_name: str,
-    board_x: int,
-    board_y: int,
-    square_length: float,
-    marker_length: float,
-    marker_bits: int,
-    dict_size: int,
+    board_name,
+    board_x,
+    board_y,
+    square_length,
+    marker_length,
+    marker_bits,
+    dict_size,
 ):
     """Write a calibration board .toml file from the CLI."""
     write_board(
@@ -420,37 +480,67 @@ def draw_board(
 
 
 @click.command()
-@click.option("--board_name", help="Path to save the file to.")
-@click.option("--board_x", help="Number of squares along the width of the board.")
-@click.option("--board_y", help="Number of squares along the height of the board.")
-@click.option("--square_length", help="Length of square edges in any units.")
+@click.option("--board_name", required=True, type=str, help="Path to save the file to.")
 @click.option(
-    "--marker_length", help=("Length of marker edges in the units of square " "length.")
+    "--board_x",
+    required=True,
+    type=int,
+    help="Number of squares along the width of the board.",
 )
-@click.option("--marker_bits", help="Number of bits in aruco markers.")
-@click.option("--dict_size", help="Size of dictionary for encoding aruco markers.")
-@click.option("--img_width", help="Width of the drawn image in pixels.")
-@click.option("--img_height", help="Height of the drawn image in pixels.")
+@click.option(
+    "--board_y",
+    required=True,
+    type=int,
+    help="Number of squares along the height of the board.",
+)
+@click.option(
+    "--square_length",
+    required=True,
+    type=float,
+    help="Length of square edges in any units.",
+)
+@click.option(
+    "--marker_length",
+    required=True,
+    type=float,
+    help=("Length of marker edges in the units of square " "length."),
+)
+@click.option(
+    "--marker_bits", required=True, type=int, help="Number of bits in aruco markers."
+)
+@click.option(
+    "--dict_size",
+    required=True,
+    type=int,
+    help="Size of dictionary for encoding aruco markers.",
+)
+@click.option(
+    "--img_width", required=True, type=int, help="Width of the drawn image in pixels."
+)
+@click.option(
+    "--img_height", required=True, type=int, help="Height of the drawn image in pixels."
+)
 @click.option(
     "--save",
-    show_default=True,
+    type=str,
     default="",
+    show_default=True,
     help=(
         "Path to the save the parameters of the board to. Only saves if a non-empty "
         "string is given."
     ),
 )
 def draw_board_cli(
-    save_folder: str,
-    board_x: int,
-    board_y: int,
-    square_length: float,
-    marker_length: float,
-    marker_bits: int,
-    dict_size: int,
-    img_width: int,
-    img_height: int,
-    save: str = "",
+    save_folder,
+    board_x,
+    board_y,
+    square_length,
+    marker_length,
+    marker_bits,
+    dict_size,
+    img_width,
+    img_height,
+    save,
 ):
     """Draw and save a printable calibration board jpg file from the CLI."""
     draw_board(
@@ -568,16 +658,27 @@ def calibrate(
 
 
 @click.command()
-@click.option("--session", help="Path pointing to the session to calibrate.")
-@click.option("--board", help="Path pointing to the board.toml file.")
+@click.option(
+    "--session",
+    required=True,
+    type=str,
+    help="Path pointing to the session to calibrate.",
+)
+@click.option(
+    "--board", required=True, type=str, help="Path pointing to the board.toml file."
+)
 @click.option(
     "--excluded_views",
+    type=Tuple[str],
     default=(),
+    show_default=True,
     help="Names (not paths) of camera views to be excluded from calibration. If not given, all views will be used.",
 )
 @click.option(
     "--calib_fname",
+    type=str,
     default="",
+    show_default=True,
     help=(
         "File path to save the calibration to. Will not save unless a non-empty "
         "string is given."
@@ -585,7 +686,9 @@ def calibrate(
 )
 @click.option(
     "--metadata_fname",
+    type=str,
     default="",
+    show_default=True,
     help=(
         "File path to save the calibration metadata to. Will not save unless a "
         "non-empty string is given."
@@ -593,7 +696,9 @@ def calibrate(
 )
 @click.option(
     "--histogram_path",
+    type=str,
     default="",
+    show_default=True,
     help=(
         "Path to save the histogram of reprojection errors to. Will not save unless a"
         " non-empty string is given."
@@ -601,20 +706,22 @@ def calibrate(
 )
 @click.option(
     "--reproj_path",
+    type=str,
     default="",
+    show_default=True,
     help=(
         "Path pointing to the session to save the board reprojection images to. "
         "Will not save unless a non-empty string is given."
     ),
 )
 def calibrate_cli(
-    session: str,
-    board: str,
-    excluded_views: Tuple[str] = (),
-    calib_fname: str = "",
-    metadata_fname: str = "",
-    histogram_path: str = "",
-    reproj_path: str = "",
+    session,
+    board,
+    excluded_views,
+    calib_fname,
+    metadata_fname,
+    histogram_path,
+    reproj_path,
 ) -> Tuple[CameraGroup, np.ndarray, np.ndarray, np.ndarray]:
     """Calibrate a session from the CLI."""
     return calibrate(
