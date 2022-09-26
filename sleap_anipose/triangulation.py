@@ -179,11 +179,13 @@ def triangulate(
 @click.command()
 @click.option(
     "--p2d",
-    required=True, 
+    required=True,
     type=str,
     help="Path pointing to the session directory containing the SLEAP track files.",
 )
-@click.option("--calib", required=True, type=str, help="Path pointing to the calibration file.")
+@click.option(
+    "--calib", required=True, type=str, help="Path pointing to the calibration file."
+)
 @click.option(
     "--frames",
     type=Tuple[int],
@@ -195,7 +197,13 @@ def triangulate(
         " exclusive) and will be entire video if not otherwise specified."
     ),
 )
-@click.option("--excluded_views", type=Tuple[str], default=(), show_default=True, help="Names (not paths) of camera views to be excluded from triangulation. If non given, all views will be used. Note that these views must have also been excluded from the calibration.")
+@click.option(
+    "--excluded_views",
+    type=Tuple[str],
+    default=(),
+    show_default=True,
+    help="Names (not paths) of camera views to be excluded from triangulation. If non given, all views will be used. Note that these views must have also been excluded from the calibration.",
+)
 @click.option(
     "--fname",
     default="",
@@ -208,7 +216,6 @@ def triangulate(
 @click.option(
     "--disp_progress",
     is_flag=True,
-    type=bool,
     default=False,
     show_default=True,
     help="Flag determining whether or not to display triangulation progress.",
@@ -372,23 +379,35 @@ def reproject(
 
 
 @click.command()
-@click.option("--p3d", required=True, type=str, help="Path pointing to the points_3d.h5 file.")
-@click.option("--calib", required=True, type=str, help="Path pointing to the calibration.toml file.")
+@click.option(
+    "--p3d", required=True, type=str, help="Path pointing to the points_3d.h5 file."
+)
+@click.option(
+    "--calib",
+    required=True,
+    type=str,
+    help="Path pointing to the calibration.toml file.",
+)
 @click.option(
     "--save",
     type=str,
     is_flag=True,
-    type=bool,
     default=False,
     show_default=True,
     help="Flag determining whether or not to save the reprojections.",
 )
-@click.option("--session", type=str, default=".", show_default=True, help="Path to save the reprojections to.")
+@click.option(
+    "--session",
+    type=str,
+    default=".",
+    show_default=True,
+    help="Path to save the reprojections to.",
+)
 def reproject_cli(
-    p3d: str,
-    calib: str,
-    save: bool = False,
-    session: str = ".",
+    p3d,
+    calib,
+    save,
+    session,
 ) -> np.ndarray:
     """Reproject 3D points to different camera views from the CLI."""
     return reproject(p3d, calib, save, session)
