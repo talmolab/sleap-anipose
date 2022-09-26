@@ -669,7 +669,7 @@ def calibrate(
 )
 @click.option(
     "--excluded_views",
-    type=Tuple[str],
+    type=Tuple,
     default=(),
     show_default=True,
     help="Names (not paths) of camera views to be excluded from calibration. If not given, all views will be used.",
