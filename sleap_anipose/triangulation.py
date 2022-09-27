@@ -160,7 +160,10 @@ def triangulate(
                     for x in Path(p2d).iterdir()
                     if x.is_dir() and x.name not in excluded_views
                 ]
-                tracks_descriptor = f"Shape: (n_frames, n_tracks, n_nodes, 3). Camera views used: {cam_names}"
+                tracks_descriptor = (
+                    "Shape: (n_frames, n_tracks, n_nodes, 3). "
+                    f"Camera views used: {cam_names}"
+                )
             else:
                 tracks_descriptor = "Shape: (n_frames, n_tracks, n_nodes, 3)."
             f["tracks"].attrs["Description"] = tracks_descriptor
@@ -179,20 +182,34 @@ def triangulate(
 @click.command()
 @click.option(
     "--p2d",
+    type=str,
+    required=True,
     help="Path pointing to the session directory containing the SLEAP track files.",
 )
-@click.option("--calib", help="Path pointing to the calibration file.")
+@click.option(
+    "--calib", type=str, required=True, help="Path pointing to the calibration file."
+)
 @click.option(
     "--frames",
-    default=(),
+    nargs=2,
+    type=int,
+    default=(-1, -1),
+    help="The range of frames (inclusive to exclusive) to triangulate over.",
+)
+@click.option(
+    "--excluded_views",
+    multiple=True,
+    type=str,
+    default=("ALL_VIEWS",),
     help=(
-        "A tuple structured as (start_frame, "
-        "end_frame) containing the frame range to triangulate. The range is (inclusive,"
-        " exclusive) and will be entire video if not otherwise specified."
+        "Names (not paths) of camera views to be excluded from triangulation. Specified"
+        " via multiple calls, i.e. --excluded_views top --excluded_views side. If not "
+        "specified, all views will be used."
     ),
 )
 @click.option(
     "--fname",
+    type=str,
     default="",
     help=(
         "The file path to save the triangulated points to (must end in .h5). "
@@ -207,71 +224,92 @@ def triangulate(
 )
 @click.option(
     "--constraints",
-    default=None,
+    multiple=True,
+    type=(int, int),
+    default=((-1, -1),),
     help=(
-        "A Kx2 array array for rigid limb constraints, default empty. An example "
-        "would be [[0, 1], [2,3]], which denotes that the length between joints 1 and 2"
-        " and the length between joints 2 and 3 are constant."
+        "Rigid limb constraints between different nodes. An example would be "
+        "--constraints 0 1 --constraints 2 3, which would denote that the lengths "
+        "between joints 0 and 1 and joints 2 and 3, respectively, are constant."
     ),
 )
 @click.option(
     "--constraints_weak",
-    default=None,
+    multiple=True,
+    type=(int, int),
+    default=((-1, -1),),
     help=(
-        "A Kx2 array of more flexible constraints such as shoulder length in humans "
-        "or tarsus length in flies, default empty."
+        "Flexible constraints such as shoulder length in humans or tarsus length in "
+        "flies. Uses same input pattern as the --constraints parameter."
     ),
 )
 @click.option(
     "--scale_smooth",
-    default=4,
+    type=float,
+    default=4.0,
     help="The weight of the temporal smoothing term in the loss function, default 4.",
 )
 @click.option(
     "--scale_length",
-    default=2,
+    type=float,
+    default=2.0,
     help="The weight of the length constraints in the loss function, default 2.",
 )
 @click.option(
     "--scale_length_weak",
+    type=float,
     default=0.5,
     help="The weight of the weak length constraints in the loss function, default 2.",
 )
 @click.option(
     "--reproj_error_threshold",
-    default=15,
+    type=float,
+    default=15.0,
     help="The threshold in pixels for discarding points for triangulation, default 15.",
 )
 @click.option(
     "--reproj_loss",
+    type=str,
     default="soft_l1",
     help="Type of loss function for the reprojection error.",
 )
 @click.option(
     "--n_deriv_smooth",
+    type=int,
     default=1,
     help="The order of derivative to smooth for in the temporal filtering, default 1.",
 )
 def triangulate_cli(
-    p2d: str,
-    calib: str,
-    frames: Tuple[int] = (),
-    fname: str = "",
-    disp_progress: bool = False,
-    constraints: List[List[int]] = None,
-    constraints_weak: List[List[int]] = None,
-    scale_smooth: float = 4.0,
-    scale_length: float = 2.0,
-    scale_length_weak: float = 0.5,
-    reproj_error_threshold: float = 15.0,
-    reproj_loss: str = "soft_l1",
-    n_deriv_smooth: int = 1,
-) -> np.ndarray:
+    p2d,
+    calib,
+    frames,
+    excluded_views,
+    fname,
+    disp_progress,
+    constraints,
+    constraints_weak,
+    scale_smooth,
+    scale_length,
+    scale_length_weak,
+    reproj_error_threshold,
+    reproj_loss,
+    n_deriv_smooth,
+):
     """Triangulate points from the CLI."""
+    if frames == (-1, -1):
+        frames = ()
+    if excluded_views == ("ALL_VIEWS",):
+        excluded_views = ()
+    if constraints == ((-1, -1),):
+        constraints = ()
+    if constraints_weak == ((-1, -1),):
+        constraints_weak = ()
+
     return triangulate(
         p2d,
         calib,
         frames,
+        excluded_views,
         fname,
         disp_progress,
         constraints=constraints,
