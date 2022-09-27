@@ -647,11 +647,14 @@ def calibrate(
 )
 @click.option(
     "--excluded_views",
-    default=(),
-    help="Names (not paths) of camera views to be excluded from calibration. If not given, all views will be used.",
+    multiple=True,
+    type=str,
+    default=("ALL_VIEWS",),
+    help="Names (not paths) of camera views to be excluded from calibration. Specified via multiple calls, i.e. --excluded_views top --excluded_views mid. If not given, all views will be used.",
 )
 @click.option(
     "--calib_fname",
+    type=str,
     default="",
     help=(
         "File path to save the calibration to. Will not save unless a non-empty "
@@ -660,6 +663,7 @@ def calibrate(
 )
 @click.option(
     "--metadata_fname",
+    type=str,
     default="",
     help=(
         "File path to save the calibration metadata to. Will not save unless a "
@@ -668,6 +672,7 @@ def calibrate(
 )
 @click.option(
     "--histogram_path",
+    type=str,
     default="",
     help=(
         "Path to save the histogram of reprojection errors to. Will not save unless a"
@@ -676,6 +681,7 @@ def calibrate(
 )
 @click.option(
     "--reproj_path",
+    type=str,
     default="",
     help=(
         "Path pointing to the session to save the board reprojection images to. "
@@ -683,15 +689,16 @@ def calibrate(
     ),
 )
 def calibrate_cli(
-    session: str,
-    board: str,
-    excluded_views: Tuple[str] = (),
-    calib_fname: str = "",
-    metadata_fname: str = "",
-    histogram_path: str = "",
-    reproj_path: str = "",
-) -> Tuple[CameraGroup, np.ndarray, np.ndarray, np.ndarray]:
+    session,
+    board,
+    excluded_views,
+    calib_fname,
+    metadata_fname,
+    histogram_path,
+    reproj_path,
+):
     """Calibrate a session from the CLI."""
+    # TODO: Process kwargs.
     return calibrate(
         session,
         board,
