@@ -293,6 +293,15 @@ def triangulate_cli(
     n_deriv_smooth,
 ):
     """Triangulate points from the CLI."""
+    if frames == (-1, -1):
+        frames = ()
+    if excluded_views == ("ALL_VIEWS",):
+        excluded_views = ()
+    if constraints == ((-1, -1),):
+        constraints = ()
+    if constraints_weak == ((-1, -1),):
+        constraints_weak = ()
+
     return triangulate(
         p2d,
         calib,
