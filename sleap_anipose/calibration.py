@@ -238,7 +238,11 @@ def make_calibration_videos(view: str):
     """
     session_name = Path(view).parent.name
     # TODO: add different movie extension functionality
-    fname = view / "calibration_images" / f"{session_name}-{view.name}-calibration.MOV"
+    fname = (
+        Path(view)
+        / "calibration_images"
+        / f"{session_name}-{Path(view).name}-calibration.MOV"
+    )
     calibration_imgs = list(Path(view).glob("*/*.jpg"))
     writer = imageio.get_writer(fname, fps=30)
 
