@@ -650,7 +650,11 @@ def calibrate(
     multiple=True,
     type=str,
     default=("ALL_VIEWS",),
-    help="Names (not paths) of camera views to be excluded from calibration. Specified via multiple calls, i.e. --excluded_views top --excluded_views mid. If not given, all views will be used.",
+    help=(
+        "Names (not paths) of camera views to be excluded from calibration. Specified"
+        " via multiple calls, i.e. --excluded_views top --excluded_views mid. If not"
+        " given all views will be used."
+    ),
 )
 @click.option(
     "--calib_fname",
@@ -698,7 +702,8 @@ def calibrate_cli(
     reproj_path,
 ):
     """Calibrate a session from the CLI."""
-    # TODO: Process kwargs.
+    if excluded_views == ("ALL_VIEWS",):
+        excluded_views = ()
     return calibrate(
         session,
         board,
