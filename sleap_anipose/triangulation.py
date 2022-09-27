@@ -219,23 +219,25 @@ def triangulate(
     default=False,
     help="Flag determining whether or not to display triangulation progress.",
 )
-# TODO: Support type hinting for constraints
 @click.option(
     "--constraints",
-    default=None,
+    multiple=True,
+    type=(int, int),
+    default=((-1, -1),),
     help=(
-        "A Kx2 array array for rigid limb constraints, default empty. An example "
-        "would be --constraints [0, 1] --constraints [2, 3], which denotes that the length between joints 1 and 2"
-        " and the length between joints 2 and 3 are constant."
+        "Rigid limb constraints between different nodes. An example would be "
+        "--constraints 0 1 --constraints 2 3, which would denote that the lengths "
+        "between joints 0 and 1 and joints 2 and 3, respectively, are constant."
     ),
 )
-# TODO: Support type hinting for weak constraints
 @click.option(
     "--constraints_weak",
-    default=None,
+    multiple=True,
+    type=(int, int),
+    default=((-1, -1),),
     help=(
-        "A Kx2 array of more flexible constraints such as shoulder length in humans "
-        "or tarsus length in flies, default empty."
+        "Flexible constraints such as shoulder length in humans or tarsus length in "
+        "flies. Uses same input pattern as the --constraints parameter."
     ),
 )
 @click.option(
