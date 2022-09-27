@@ -250,9 +250,12 @@ def make_calibration_videos(view: str):
 
 @click.command()
 @click.option(
-    "--session", help="Path pointing to the session with the calibration board images."
+    "--session",
+    type=str,
+    required=True,
+    help="Path pointing to the session with the calibration board images.",
 )
-def make_calibration_videos_cli(session: str):
+def make_calibration_videos_cli(session):
     """Generate movies from calibration board images from the CLI."""
     make_calibration_videos(session)
 
@@ -279,7 +282,12 @@ def read_board(board_file: str):
 
 
 @click.command()
-@click.option("--board_file", help="Path to the calibration board toml file.")
+@click.option(
+    "--board_file",
+    required=True,
+    type=str,
+    help="Path to the calibration board toml file.",
+)
 def read_board_cli(board_file: str):
     """Read toml file detailing the calibration board from the CLI."""
     return read_board(board_file)
