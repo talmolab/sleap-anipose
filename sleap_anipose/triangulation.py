@@ -180,18 +180,28 @@ def triangulate(
 @click.option(
     "--p2d",
     type=str,
+    required=True,
     help="Path pointing to the session directory containing the SLEAP track files.",
 )
-@click.option("--calib", type=str, help="Path pointing to the calibration file.")
+@click.option(
+    "--calib", type=str, required=True, help="Path pointing to the calibration file."
+)
 @click.option(
     "--frames",
     nargs=2,
     type=int,
-    default=(0, 0),
+    default=(-1, -1),
+    help="The range of frames (inclusive to exclusive) to triangulate over.",
+)
+@click.option(
+    "--excluded_views",
+    multiple=True,
+    type=str,
+    default=("ALL_VIEWS",),
     help=(
-        "A tuple structured as (start_frame, end_frame) "
-        "containing the frame range to triangulate. The range is (inclusive,"
-        " exclusive) and will be entire video if not otherwise specified."
+        "Names (not paths) of camera views to be excluded from triangulation. Specified"
+        " via multiple calls, i.e. --excluded_views top --excluded_views side. If not "
+        "specified, all views will be used."
     ),
 )
 @click.option(
@@ -268,6 +278,7 @@ def triangulate_cli(
     p2d,
     calib,
     frames,
+    excluded_views,
     fname,
     disp_progress,
     constraints,
@@ -284,6 +295,7 @@ def triangulate_cli(
         p2d,
         calib,
         frames,
+        excluded_views,
         fname,
         disp_progress,
         constraints=constraints,
