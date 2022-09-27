@@ -284,11 +284,11 @@ def read_board(board_file: str):
 @click.command()
 @click.option(
     "--board_file",
-    required=True,
     type=str,
+    required=True,
     help="Path to the calibration board toml file.",
 )
-def read_board_cli(board_file: str):
+def read_board_cli(board_file):
     """Read toml file detailing the calibration board from the CLI."""
     return read_board(board_file)
 
@@ -314,6 +314,28 @@ def write_board(
         marker_bits: Number of bits encoded in the marker images.
         dict_size: Size of the dictionary used for marker encoding.
     """
+    ARUCO_DICTS = {
+        (4, 50): aruco.DICT_4X4_50,
+        (5, 50): aruco.DICT_5X5_50,
+        (6, 50): aruco.DICT_6X6_50,
+        (7, 50): aruco.DICT_7X7_50,
+        (4, 100): aruco.DICT_4X4_100,
+        (5, 100): aruco.DICT_5X5_100,
+        (6, 100): aruco.DICT_6X6_100,
+        (7, 100): aruco.DICT_7X7_100,
+        (4, 250): aruco.DICT_4X4_250,
+        (5, 250): aruco.DICT_5X5_250,
+        (6, 250): aruco.DICT_6X6_250,
+        (7, 250): aruco.DICT_7X7_250,
+        (4, 1000): aruco.DICT_4X4_1000,
+        (5, 1000): aruco.DICT_5X5_1000,
+        (6, 1000): aruco.DICT_6X6_1000,
+        (7, 1000): aruco.DICT_7X7_1000,
+    }
+
+    if (marker_bits, dict_size) not in ARUCO_DICTS.keys():
+        raise Exception("Invalid marker bits or dictionary size.")
+
     board_dict = {
         "board_x": board_x,
         "board_y": board_y,
@@ -327,23 +349,53 @@ def write_board(
 
 
 @click.command()
-@click.option("--board_name", help="File name to save the board as.")
-@click.option("--board_x", help="Number of squares along the width of the board.")
-@click.option("--board_y", help="Number of squares along the height of the board.")
-@click.option("--square_length", help="Length of square edge in any units.")
 @click.option(
-    "--marker_length", help="Length of marker edge in same units as square length."
+    "--board_name", type=str, required=True, help="File name to save the board as."
 )
-@click.option("--marker_bits", help="Number of bits encoded in the marker images.")
-@click.option("--dict_size", help="Size of dictionary used for marking encoding.")
+@click.option(
+    "--board_x",
+    type=int,
+    required=True,
+    help="Number of squares along the width of the board.",
+)
+@click.option(
+    "--board_y",
+    type=int,
+    required=True,
+    help="Number of squares along the height of the board.",
+)
+@click.option(
+    "--square_length",
+    type=float,
+    required=True,
+    help="Length of square edge in any units.",
+)
+@click.option(
+    "--marker_length",
+    type=float,
+    required=True,
+    help="Length of marker edge in same units as square length.",
+)
+@click.option(
+    "--marker_bits",
+    type=int,
+    required=True,
+    help="Number of bits encoded in the marker images.",
+)
+@click.option(
+    "--dict_size",
+    type=int,
+    required=True,
+    help="Size of dictionary used for marking encoding.",
+)
 def write_board_cli(
-    board_name: str,
-    board_x: int,
-    board_y: int,
-    square_length: float,
-    marker_length: float,
-    marker_bits: int,
-    dict_size: int,
+    board_name,
+    board_x,
+    board_y,
+    square_length,
+    marker_length,
+    marker_bits,
+    dict_size,
 ):
     """Write a calibration board .toml file from the CLI."""
     write_board(
@@ -428,20 +480,50 @@ def draw_board(
 
 
 @click.command()
-@click.option("--board_name", help="Path to save the file to.")
-@click.option("--board_x", help="Number of squares along the width of the board.")
-@click.option("--board_y", help="Number of squares along the height of the board.")
-@click.option("--square_length", help="Length of square edges in any units.")
+@click.option("--board_name", type=str, required=True, help="Path to save the file to.")
 @click.option(
-    "--marker_length", help=("Length of marker edges in the units of square " "length.")
+    "--board_x",
+    type=int,
+    required=True,
+    help="Number of squares along the width of the board.",
 )
-@click.option("--marker_bits", help="Number of bits in aruco markers.")
-@click.option("--dict_size", help="Size of dictionary for encoding aruco markers.")
-@click.option("--img_width", help="Width of the drawn image in pixels.")
-@click.option("--img_height", help="Height of the drawn image in pixels.")
+@click.option(
+    "--board_y",
+    type=int,
+    required=True,
+    help="Number of squares along the height of the board.",
+)
+@click.option(
+    "--square_length",
+    type=float,
+    required=True,
+    help="Length of square edges in any units.",
+)
+@click.option(
+    "--marker_length",
+    type=float,
+    required=True,
+    help=("Length of marker edges in the units of square " "length."),
+)
+@click.option(
+    "--marker_bits", type=int, required=True, help="Number of bits in aruco markers."
+)
+@click.option(
+    "--dict_size",
+    type=int,
+    required=True,
+    help="Size of dictionary for encoding aruco markers.",
+)
+@click.option(
+    "--img_width", type=int, required=True, help="Width of the drawn image in pixels."
+)
+@click.option(
+    "--img_height", type=int, required=True, help="Height of the drawn image in pixels."
+)
 @click.option(
     "--save",
     show_default=True,
+    type=str,
     default="",
     help=(
         "Path to the save the parameters of the board to. Only saves if a non-empty "
@@ -449,16 +531,16 @@ def draw_board(
     ),
 )
 def draw_board_cli(
-    save_folder: str,
-    board_x: int,
-    board_y: int,
-    square_length: float,
-    marker_length: float,
-    marker_bits: int,
-    dict_size: int,
-    img_width: int,
-    img_height: int,
-    save: str = "",
+    save_folder,
+    board_x,
+    board_y,
+    square_length,
+    marker_length,
+    marker_bits,
+    dict_size,
+    img_width,
+    img_height,
+    save,
 ):
     """Draw and save a printable calibration board jpg file from the CLI."""
     draw_board(
