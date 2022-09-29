@@ -620,19 +620,21 @@ def calibrate(
         corners, cgroup, metadata_fname
     )
 
-    make_histogram(detections, reprojections, histogram_path)
+    if histogram_path:
+        make_histogram(detections, reprojections, histogram_path)
 
-    make_reproj_imgs(
-        detections,
-        reprojections,
-        frames,
-        session,
-        excluded_views,
-        n_samples=4,
-        save_path=reproj_path,
-    )
+    if reproj_path:
+        make_reproj_imgs(
+            detections,
+            reprojections,
+            frames,
+            session,
+            excluded_views,
+            n_samples=4,
+            save_path=reproj_path,
+        )
 
-    if len(calib_fname) > 0:
+    if calib_fname:
         cgroup.dump(calib_fname)
 
     metadata = (frames, detections, triangulations, reprojections)
