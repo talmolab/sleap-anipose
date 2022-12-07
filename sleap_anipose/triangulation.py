@@ -160,7 +160,10 @@ def triangulate(
                     for x in Path(p2d).iterdir()
                     if x.is_dir() and x.name not in excluded_views
                 ]
-                tracks_descriptor = f"Shape: (n_frames, n_tracks, n_nodes, 3). Camera views used: {cam_names}"
+                tracks_descriptor = (
+                    "Shape: (n_frames, n_tracks, n_nodes, 3). "
+                    f"Camera views used: {cam_names}"
+                )
             else:
                 tracks_descriptor = "Shape: (n_frames, n_tracks, n_nodes, 3)."
             f["tracks"].attrs["Description"] = tracks_descriptor
@@ -179,35 +182,35 @@ def triangulate(
 @click.command()
 @click.option(
     "--p2d",
-    required=True,
     type=str,
+    required=True,
     help="Path pointing to the session directory containing the SLEAP track files.",
 )
 @click.option(
-    "--calib", required=True, type=str, help="Path pointing to the calibration file."
+    "--calib", type=str, required=True, help="Path pointing to the calibration file."
 )
 @click.option(
     "--frames",
-    type=Tuple[int],
-    default=(),
-    show_default=True,
-    help=(
-        "A tuple structured as (start_frame, "
-        "end_frame) containing the frame range to triangulate. The range is (inclusive,"
-        " exclusive) and will be entire video if not otherwise specified."
-    ),
+    nargs=2,
+    type=int,
+    default=(-1, -1),
+    help="The range of frames (inclusive to exclusive) to triangulate over.",
 )
 @click.option(
     "--excluded_views",
-    type=Tuple[str],
-    default=(),
-    show_default=True,
-    help="Names (not paths) of camera views to be excluded from triangulation. If non given, all views will be used. Note that these views must have also been excluded from the calibration.",
+    multiple=True,
+    type=str,
+    default=("ALL_VIEWS",),
+    help=(
+        "Names (not paths) of camera views to be excluded from triangulation. Specified"
+        " via multiple calls, i.e. --excluded_views top --excluded_views side. If not "
+        "specified, all views will be used."
+    ),
 )
 @click.option(
     "--fname",
+    type=str,
     default="",
-    show_default=True,
     help=(
         "The file path to save the triangulated points to (must end in .h5). "
         "Will not save unless a non-empty string is given."
@@ -217,70 +220,63 @@ def triangulate(
     "--disp_progress",
     is_flag=True,
     default=False,
-    show_default=True,
     help="Flag determining whether or not to display triangulation progress.",
 )
 @click.option(
     "--constraints",
-    type=List[List[int]],
-    default=None,
-    show_default=True,
+    multiple=True,
+    type=(int, int),
+    default=((-1, -1),),
     help=(
-        "A Kx2 array array for rigid limb constraints, default empty. An example "
-        "would be [[0, 1], [2,3]], which denotes that the length between joints 1 and 2"
-        " and the length between joints 2 and 3 are constant."
+        "Rigid limb constraints between different nodes. An example would be "
+        "--constraints 0 1 --constraints 2 3, which would denote that the lengths "
+        "between joints 0 and 1 and joints 2 and 3, respectively, are constant."
     ),
 )
 @click.option(
     "--constraints_weak",
-    type=List[List[int]],
-    default=None,
-    show_default=True,
+    multiple=True,
+    type=(int, int),
+    default=((-1, -1),),
     help=(
-        "A Kx2 array of more flexible constraints such as shoulder length in humans "
-        "or tarsus length in flies, default empty."
+        "Flexible constraints such as shoulder length in humans or tarsus length in "
+        "flies. Uses same input pattern as the --constraints parameter."
     ),
 )
 @click.option(
     "--scale_smooth",
     type=float,
     default=4.0,
-    show_default=True,
     help="The weight of the temporal smoothing term in the loss function, default 4.",
 )
 @click.option(
     "--scale_length",
     type=float,
     default=2.0,
-    show_default=True,
     help="The weight of the length constraints in the loss function, default 2.",
 )
 @click.option(
     "--scale_length_weak",
     type=float,
     default=0.5,
-    show_default=True,
     help="The weight of the weak length constraints in the loss function, default 2.",
 )
 @click.option(
     "--reproj_error_threshold",
     type=float,
     default=15.0,
-    show_default=True,
     help="The threshold in pixels for discarding points for triangulation, default 15.",
 )
 @click.option(
     "--reproj_loss",
     type=str,
     default="soft_l1",
-    show_default=True,
     help="Type of loss function for the reprojection error.",
 )
 @click.option(
     "--n_deriv_smooth",
     type=int,
     default=1,
-    show_default=True,
     help="The order of derivative to smooth for in the temporal filtering, default 1.",
 )
 def triangulate_cli(
@@ -298,8 +294,17 @@ def triangulate_cli(
     reproj_error_threshold,
     reproj_loss,
     n_deriv_smooth,
-) -> np.ndarray:
+):
     """Triangulate points from the CLI."""
+    if frames == (-1, -1):
+        frames = ()
+    if excluded_views == ("ALL_VIEWS",):
+        excluded_views = ()
+    if constraints == ((-1, -1),):
+        constraints = ()
+    if constraints_weak == ((-1, -1),):
+        constraints_weak = ()
+
     return triangulate(
         p2d,
         calib,
@@ -379,35 +384,19 @@ def reproject(
 
 
 @click.command()
-@click.option(
-    "--p3d", required=True, type=str, help="Path pointing to the points_3d.h5 file."
-)
-@click.option(
-    "--calib",
-    required=True,
-    type=str,
-    help="Path pointing to the calibration.toml file.",
-)
+@click.option("--p3d", help="Path pointing to the points_3d.h5 file.")
+@click.option("--calib", help="Path pointing to the calibration.toml file.")
 @click.option(
     "--save",
-    type=str,
-    is_flag=True,
     default=False,
-    show_default=True,
     help="Flag determining whether or not to save the reprojections.",
 )
-@click.option(
-    "--session",
-    type=str,
-    default=".",
-    show_default=True,
-    help="Path to save the reprojections to.",
-)
+@click.option("--session", default=".", help="Path to save the reprojections to.")
 def reproject_cli(
-    p3d,
-    calib,
-    save,
-    session,
+    p3d: str,
+    calib: str,
+    save: bool = False,
+    session: str = ".",
 ) -> np.ndarray:
     """Reproject 3D points to different camera views from the CLI."""
     return reproject(p3d, calib, save, session)
