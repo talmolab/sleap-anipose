@@ -15,6 +15,26 @@ import cv2
 from cv2 import aruco
 
 
+ARUCO_DICTS = {
+    (4, 50): aruco.DICT_4X4_50,
+    (5, 50): aruco.DICT_5X5_50,
+    (6, 50): aruco.DICT_6X6_50,
+    (7, 50): aruco.DICT_7X7_50,
+    (4, 100): aruco.DICT_4X4_100,
+    (5, 100): aruco.DICT_5X5_100,
+    (6, 100): aruco.DICT_6X6_100,
+    (7, 100): aruco.DICT_7X7_100,
+    (4, 250): aruco.DICT_4X4_250,
+    (5, 250): aruco.DICT_5X5_250,
+    (6, 250): aruco.DICT_6X6_250,
+    (7, 250): aruco.DICT_7X7_250,
+    (4, 1000): aruco.DICT_4X4_1000,
+    (5, 1000): aruco.DICT_5X5_1000,
+    (6, 1000): aruco.DICT_6X6_1000,
+    (7, 1000): aruco.DICT_7X7_1000,
+}
+
+
 def make_histogram(
     detections: np.ndarray,
     reprojections: np.ndarray,
@@ -318,6 +338,9 @@ def write_board(
         marker_bits: Number of bits encoded in the marker images.
         dict_size: Size of the dictionary used for marker encoding.
     """
+    if (marker_bits, dict_size) not in ARUCO_DICTS.keys():
+        raise Exception("Invalid marker bits or dictionary size.")
+
     board_dict = {
         "board_x": board_x,
         "board_y": board_y,
