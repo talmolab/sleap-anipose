@@ -124,8 +124,8 @@ def test_write_board(tmp_path):
     board_y = 0
     square_length = 0.0
     marker_length = 0.0
-    marker_bits = 0
-    dict_size = 0
+    marker_bits = 4
+    dict_size = 100
     write_board(
         board_path,
         board_x,
