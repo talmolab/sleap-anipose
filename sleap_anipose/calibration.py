@@ -250,18 +250,20 @@ def get_metadata(
     return metadata
 
 
-def make_calibration_videos(view: str):
+def make_calibration_videos(view: str) -> str:
     """Generate movies from calibration board images.
 
     Args:
         view: Path pointing to the view subfolder with the calibration board images.
+
+    Returns:
+        fname: The path of the output video.
     """
     session_name = Path(view).parent.name
-    # TODO: add different movie extension functionality
     fname = (
         Path(view)
         / "calibration_images"
-        / f"{session_name}-{Path(view).name}-calibration.MOV"
+        / f"{session_name}-{Path(view).name}-calibration.mp4"
     )
     calibration_imgs = list(Path(view).glob("*/*.jpg"))
     writer = imageio.get_writer(fname, fps=30)
@@ -270,6 +272,7 @@ def make_calibration_videos(view: str):
         writer.append(imageio.imread(img))
 
     writer.close()
+    return fname.as_posix()
 
 
 @click.command()
@@ -619,10 +622,11 @@ def calibrate(
 
     calib_videos = []
     for cam in cams:
-        calib_video = list(cam.glob("*/*.MOV"))
+        calib_video = list(cam.glob("*/*calibration.mp4"))
         if not calib_video:
-            make_calibration_videos(cam.as_posix())
-        calib_videos.append([calib_video[0].as_posix()])
+            calib_videos.append([make_calibration_videos(cam.as_posix())])
+        else:
+            calib_videos.append([calib_video[0].as_posix()])
 
     if type(board) == str:
         calib_board = read_board(board)
