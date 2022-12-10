@@ -269,7 +269,7 @@ def make_calibration_videos(view: str) -> str:
     writer = imageio.get_writer(fname, fps=30)
 
     for img in calibration_imgs:
-        writer.append(imageio.imread(img))
+        writer.append_data(imageio.imread(img))
 
     writer.close()
     return fname.as_posix()
