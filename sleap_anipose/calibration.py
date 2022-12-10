@@ -444,7 +444,6 @@ def draw_board(
         save: Path to the save the parameters of the board to. Will only save if a
             non-empty string is given.
     """
-
     if (marker_bits, dict_size) not in ARUCO_DICTS.keys():
         raise Exception("Invalid marker bits or dictionary size.")
     else:
