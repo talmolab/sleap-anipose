@@ -59,7 +59,7 @@ def test_get_metadata(minimal_session, tmp_path, excluded_views):
     ]
     cgroup = CameraGroup.from_names([x.name for x in cams])
 
-    board_vids = [[list(cam.glob("*/*.MOV"))[0].as_posix()] for cam in cams]
+    board_vids = [[list(cam.glob("*/*calibration.mp4"))[0].as_posix()] for cam in cams]
     board = read_board((Path(minimal_session) / "board.toml").as_posix())
 
     tmp_calib = tmp_path / "calib_meta"

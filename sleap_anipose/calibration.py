@@ -250,26 +250,29 @@ def get_metadata(
     return metadata
 
 
-def make_calibration_videos(view: str):
+def make_calibration_videos(view: str) -> str:
     """Generate movies from calibration board images.
 
     Args:
         view: Path pointing to the view subfolder with the calibration board images.
+
+    Returns:
+        fname: The path of the output video.
     """
     session_name = Path(view).parent.name
-    # TODO: add different movie extension functionality
     fname = (
         Path(view)
         / "calibration_images"
-        / f"{session_name}-{Path(view).name}-calibration.MOV"
+        / f"{session_name}-{Path(view).name}-calibration.mp4"
     )
     calibration_imgs = list(Path(view).glob("*/*.jpg"))
     writer = imageio.get_writer(fname, fps=30)
 
     for img in calibration_imgs:
-        writer.append(imageio.imread(img))
+        writer.append_data(imageio.imread(img))
 
     writer.close()
+    return fname.as_posix()
 
 
 @click.command()
@@ -441,25 +444,6 @@ def draw_board(
         save: Path to the save the parameters of the board to. Will only save if a
             non-empty string is given.
     """
-    ARUCO_DICTS = {
-        (4, 50): aruco.DICT_4X4_50,
-        (5, 50): aruco.DICT_5X5_50,
-        (6, 50): aruco.DICT_6X6_50,
-        (7, 50): aruco.DICT_7X7_50,
-        (4, 100): aruco.DICT_4X4_100,
-        (5, 100): aruco.DICT_5X5_100,
-        (6, 100): aruco.DICT_6X6_100,
-        (7, 100): aruco.DICT_7X7_100,
-        (4, 250): aruco.DICT_4X4_250,
-        (5, 250): aruco.DICT_5X5_250,
-        (6, 250): aruco.DICT_6X6_250,
-        (7, 250): aruco.DICT_7X7_250,
-        (4, 1000): aruco.DICT_4X4_1000,
-        (5, 1000): aruco.DICT_5X5_1000,
-        (6, 1000): aruco.DICT_6X6_1000,
-        (7, 1000): aruco.DICT_7X7_1000,
-    }
-
     if (marker_bits, dict_size) not in ARUCO_DICTS.keys():
         raise Exception("Invalid marker bits or dictionary size.")
     else:
@@ -619,10 +603,11 @@ def calibrate(
 
     calib_videos = []
     for cam in cams:
-        calib_video = list(cam.glob("*/*.MOV"))
+        calib_video = list(cam.glob("*/*calibration.mp4"))
         if not calib_video:
-            make_calibration_videos(cam.as_posix())
-        calib_videos.append([calib_video[0].as_posix()])
+            calib_videos.append([make_calibration_videos(cam.as_posix())])
+        else:
+            calib_videos.append([calib_video[0].as_posix()])
 
     if type(board) == str:
         calib_board = read_board(board)
