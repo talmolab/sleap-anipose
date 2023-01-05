@@ -79,8 +79,7 @@ def triangulate(
             range to triangulate. The range is (inclusive, exclusive) and will be
             considered as the entire video if not otherwise specified.
         excluded_views: Names (not paths) of camera views to be excluded from
-            triangulation. If non given, all views will be used. Note that these views
-            must have also been excluded from the calibration.
+            triangulation. If not given, all views will be used.
         fname: The file path to save the triangulated points to (must end in .h5). Will
             not save unless a non-empty string is given.
         disp_progress: A flag determining whether or not to show triangulation
@@ -113,15 +112,27 @@ def triangulate(
     if type(p2d) == str:
         points_2d = load_tracks(p2d, frames, excluded_views)
     else:
+        # TODO: Decouple view exclusion from input raw 2D coordinates
         if frames:
-            points_2d = p2d.copy()[frames[0], frames[1]]
+            points_2d = p2d.copy()[:, frames[0] : frames[1]]
         else:
             points_2d = p2d.copy()
 
     if type(calib) == str:
-        cgroup = CameraGroup.load(calib)
+        full_cgroup = CameraGroup.load(calib)
     else:
-        cgroup = calib
+        full_cgroup = calib
+
+    if excluded_views:
+        cgroup = full_cgroup.subset_cameras(
+            [
+                i
+                for i, x in enumerate(full_cgroup.get_names())
+                if x not in excluded_views
+            ]
+        )
+    else:
+        cgroup = full_cgroup
 
     n_tracks = points_2d.shape[2]
 
