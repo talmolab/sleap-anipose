@@ -337,8 +337,9 @@ def triangulate_cli(
 def reproject(
     p3d: Union[np.ndarray, str],
     calib: Union[CameraGroup, str],
-    save: bool = False,
-    session: str = ".",
+    frames: Tuple[int] = (),
+    excluded_views: Tuple[str] = (),
+    fname: str = "",
 ) -> np.ndarray:
     """Reproject triangulated points to each camera's view.
 
@@ -348,9 +349,13 @@ def reproject(
         calib: An object containing all the camera calibration data or the path
             pointing to its saved file. The order of the cameras in this object
             determines the order of the reprojections along the cameras axis.
-        save: A flag determining whether or not to save the reprojections.
-        session: Path to the session containing the 3D points and calibration,
-            assumed to be the working directory if not specified.
+        frames: A tuple structured as (start_frame, end_frame) containing the frame
+            range to triangulate. The range is (inclusive, exclusive) and will be
+            considered as the entire video if not otherwise specified.
+        excluded_views: Names (not paths) of camera views to be excluded from
+            triangulation. If not given, all views will be used.
+        fname: The file path to save the triangulated points to (must end in .h5). Will
+            not save unless a non-empty string is given.
 
     Returns:
         A (n_cams, n_frames, n_tracks, n_nodes, 2) ndarray of the reprojections
@@ -364,10 +369,24 @@ def reproject(
     else:
         points = p3d.copy()
 
+    if frames:
+        points = points[frames[0] : frames[1]]
+
     if type(calib) == str:
-        cgroup = CameraGroup.load(calib)
+        full_cgroup = CameraGroup.load(calib)
     else:
-        cgroup = calib
+        full_cgroup = calib
+
+    if excluded_views:
+        cgroup = full_cgroup.subset_cameras(
+            [
+                i
+                for i, x in enumerate(full_cgroup.get_names())
+                if x not in excluded_views
+            ]
+        )
+    else:
+        cgroup = full_cgroup
 
     n_frames, n_tracks, n_nodes, _ = points.shape
     cams = cgroup.get_names()
@@ -376,38 +395,61 @@ def reproject(
         (len(cams), n_frames, n_tracks, n_nodes, 2)
     )
 
-    if save:
+    if fname:
         for i, cam in enumerate(cams):
-            fname = Path(session) / cam / "reprojections.h5"
             with h5py.File(fname, "w") as f:
                 f.create_dataset(
-                    "tracks",
+                    f"{cam}_tracks",
                     data=reprojections[i],
                     chunks=True,
                     compression="gzip",
                     compression_opts=1,
                 )
-                f["tracks"].attrs[
+                f[f"{cam}_tracks"].attrs[
                     "Description"
-                ] = f"Shape: (n_frames, n_tracks, n_nodes, 2). View: {cam}"
+                ] = f"Shape: (n_frames, n_tracks, n_nodes, 2)."
 
     return reprojections
 
 
 @click.command()
-@click.option("--p3d", help="Path pointing to the points_3d.h5 file.")
-@click.option("--calib", help="Path pointing to the calibration.toml file.")
 @click.option(
-    "--save",
-    default=False,
-    help="Flag determining whether or not to save the reprojections.",
+    "--p3d",
+    type=str,
+    required=True,
+    help="Path pointing to the .h5 file containing the 3D points.",
 )
-@click.option("--session", default=".", help="Path to save the reprojections to.")
-def reproject_cli(
-    p3d: str,
-    calib: str,
-    save: bool = False,
-    session: str = ".",
-) -> np.ndarray:
-    """Reproject 3D points to different camera views from the CLI."""
-    return reproject(p3d, calib, save, session)
+@click.option(
+    "--calib", type=str, required=True, help="Path pointing to the calibration file."
+)
+@click.option(
+    "--fname",
+    type=str,
+    required=True,
+    help="The file path to save the triangulated points to (must end in .h5).",
+)
+@click.option(
+    "--frames",
+    nargs=2,
+    type=int,
+    default=(-1, -1),
+    help="The range of frames (inclusive to exclusive) to triangulate over.",
+)
+@click.option(
+    "--excluded_views",
+    multiple=True,
+    type=str,
+    default=("ALL_VIEWS",),
+    help=(
+        "Names (not paths) of camera views to be excluded from triangulation. Specified"
+        " via multiple calls, i.e. --excluded_views top --excluded_views side. If not "
+        "specified, all views will be used."
+    ),
+)
+def reproject_cli(p3d, calib, fname, frames, excluded_views):
+    """Triangulate points from the CLI."""
+    if frames == (-1, -1):
+        frames = ()
+    if excluded_views == ("ALL_VIEWS",):
+        excluded_views = ()
+    return reproject(p3d, calib, frames, excluded_views, fname)
