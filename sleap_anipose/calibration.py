@@ -660,6 +660,12 @@ def calibrate(
     "--board", type=str, required=True, help="Path pointing to the board.toml file."
 )
 @click.option(
+    "--calib_fname",
+    type=str,
+    required=True,
+    help="File path to save the calibration to, must end in .toml",
+)
+@click.option(
     "--excluded_views",
     multiple=True,
     type=str,
@@ -668,15 +674,6 @@ def calibrate(
         "Names (not paths) of camera views to be excluded from calibration. Specified"
         " via multiple calls, i.e. --excluded_views top --excluded_views mid. If not"
         " given all views will be used."
-    ),
-)
-@click.option(
-    "--calib_fname",
-    type=str,
-    default="",
-    help=(
-        "File path to save the calibration to. Will not save unless a non-empty "
-        "string is given."
     ),
 )
 @click.option(
@@ -709,8 +706,8 @@ def calibrate(
 def calibrate_cli(
     session,
     board,
-    excluded_views,
     calib_fname,
+    excluded_views,
     metadata_fname,
     histogram_path,
     reproj_path,

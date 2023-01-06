@@ -201,6 +201,12 @@ def triangulate(
     "--calib", type=str, required=True, help="Path pointing to the calibration file."
 )
 @click.option(
+    "--fname",
+    type=str,
+    required=True,
+    help="The file path to save the triangulated points to (must end in .h5).",
+)
+@click.option(
     "--frames",
     nargs=2,
     type=int,
@@ -216,15 +222,6 @@ def triangulate(
         "Names (not paths) of camera views to be excluded from triangulation. Specified"
         " via multiple calls, i.e. --excluded_views top --excluded_views side. If not "
         "specified, all views will be used."
-    ),
-)
-@click.option(
-    "--fname",
-    type=str,
-    default="",
-    help=(
-        "The file path to save the triangulated points to (must end in .h5). "
-        "Will not save unless a non-empty string is given."
     ),
 )
 @click.option(
@@ -293,9 +290,9 @@ def triangulate(
 def triangulate_cli(
     p2d,
     calib,
+    fname,
     frames,
     excluded_views,
-    fname,
     disp_progress,
     constraints,
     constraints_weak,
