@@ -41,19 +41,22 @@ def test_triangulate(minimal_session, tmp_path, frames, excluded_views):
     assert np.all(loaded_frames == frames)
 
 
-def test_reproject(minimal_session):
+@pytest.mark.parametrize("frames,excluded_views", [((25, 75), ("side",))])
+def test_reproject(minimal_session, frames, excluded_views):
     assert (Path(minimal_session) / "points3d.h5").exists()
+    assert (Path(minimal_session) / "calibration.toml").exists()
     with h5py.File(Path(minimal_session) / "points3d.h5", "r") as f:
         p3d = f["tracks"][:]
-    assert (Path(minimal_session) / "calibration.toml").exists()
     cgroup = CameraGroup.load(Path(minimal_session) / "calibration.toml")
 
-    cams = cgroup.get_names()
+    cams = [x for x in cgroup.get_names() if x not in excluded_views]
     n_cams = len(cams)
+    n_frames = frames[1] - frames[0]
 
-    p2d = reproject(p3d, cgroup)
+    p2d = reproject(p3d, cgroup, frames, excluded_views)
 
     assert p2d.shape[0] == n_cams
+    assert p2d.shape[1] == n_frames
     assert p2d.shape[-1] == 2
 
 
