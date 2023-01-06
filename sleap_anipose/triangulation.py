@@ -391,7 +391,7 @@ def reproject(
     n_frames, n_tracks, n_nodes, _ = points.shape
     cams = cgroup.get_names()
 
-    reprojections = cgroup.project(p3d.reshape((-1, 3))).reshape(
+    reprojections = cgroup.project(points.reshape((-1, 3))).reshape(
         (len(cams), n_frames, n_tracks, n_nodes, 2)
     )
 
