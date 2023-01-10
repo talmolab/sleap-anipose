@@ -527,7 +527,7 @@ def draw_board(
     ),
 )
 def draw_board_cli(
-    save_folder,
+    board_name,
     board_x,
     board_y,
     square_length,
@@ -540,7 +540,7 @@ def draw_board_cli(
 ):
     """Draw and save a printable calibration board jpg file from the CLI."""
     draw_board(
-        save_folder,
+        board_name,
         board_x,
         board_y,
         square_length,
