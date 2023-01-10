@@ -18,7 +18,7 @@ One can create a charuco board pattern via two different ways using sleap-anipos
 1. Through the CLI
 
 ```
-slap-draw_board --board_name my/path/board.jpg --board_X 8 --board_Y 11 --square_length 24.0 --marker_length --18.75 --img_width 1440 --img_height 1440 --save my/path/board.toml
+slap-draw_board --board_name my/path/board.jpg --board_x 8 --board_y 11 --square_length 24.0 --marker_length 18.75 --marker_bits 4 --dict_size 1000 --img_width 1440 --img_height 1440 --save my/path/board.toml
 ```
 
 2. Through the API
@@ -26,8 +26,20 @@ slap-draw_board --board_name my/path/board.jpg --board_X 8 --board_Y 11 --square
 ```python 
 
 import sleap-anipose as slap 
-slap.calibration.draw_board("my/path/board.jpg", 8, 11, 24.0, 18.75, 1440, 1440, "my/path/board.toml")
+
+slap.draw_board(board_name = 'my/path/board.jpg', 
+                board_x = 8, 
+                board_y = 11, 
+                square_length = 24.0, 
+                marker_length = 18.75, 
+                marker_bits = 4, 
+                dict_size = 1000, 
+                img_width = 1440, 
+                img_height = 1440, 
+                save = 'my/path/board.toml')
 ```
+
+It is important to note that if the optional `save` parameter is not given, the `.toml` parameter file will not be saved using the `draw_board` function.
 
 Currently, we only support charuco board calibration, but plan to expand to checkerboards and aruco boards. It is also important to note that we currently only generate aruco markers with 4 bits from a size 1000 dictionary. However, if one used a calibration board with a different aruco encoding the board can still be used for calibration and triangulation using sleap-anipose. One could do so by writing a toml file that describes the board according to the attributes in the write_board function. Refer to the [API](sleap_anipose/calibration.py) for more details. 
 
@@ -76,13 +88,20 @@ Alternatively, instead of taking videos for board calibration, one could take sy
 8. Run the calibration function from either the command line or a script.
 
 ```
-slap-calibrate --session my/path --board my/path/board.toml --calib_fname my/path/calibration.toml --metadata_fname my/path/calibration.metadata.h5 --histogram_path my/path --reproj_path my/path
+slap-calibrate --session my/path --board my/path/board.toml --excluded_views side --excluded_views top --calib_fname my/path/calibration.toml --metadata_fname my/path/calibration_metadata.h5 --histogram_path my/path/reprojection_histogram.png --reproj_path my/path
 ```
 
 ```python
 
 import sleap-anipose as slap 
-cgroup, metadata = slap.calibrate("my/path", "my/path/board.toml", "my/path/calibration.toml", "my/path/calibration.metadata.h5", "my/path", "my/path")
+
+cgroup, metadata = slap.calibrate(session = "my/path", 
+                                board = "my/path/board.toml", 
+                                excluded_views = ('side', 'top'),
+                                calib_fname = "my/path/calibration.toml", 
+                                metadata_fname = "my/path/calibration.metadata.h5", 
+                                histogram_path = "my/path/reprojection_histogram.png", 
+                                reproj_path = "my/path")
 ```
 
 Refer to the [function documentation](sleap_anipose/calibration.py) and the [FOLDER_STRUCTURE.md](sleap_anipose/docs/FOLDER_STRUCTURE.md) for more details. 

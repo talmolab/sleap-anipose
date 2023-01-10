@@ -432,7 +432,7 @@ def draw_board(
     """Draw and save a printable calibration board jpg file.
 
     Args:
-        board_name: Path to save the file to.
+        board_name: Path to save the image file to, must end in .jpg.
         board_x: Number of squares along the width of the board.
         board_y: Number of squares along with height of the board.
         square_length: Length of square edges in meters.
@@ -447,7 +447,9 @@ def draw_board(
     if (marker_bits, dict_size) not in ARUCO_DICTS.keys():
         raise Exception("Invalid marker bits or dictionary size.")
     else:
-        aruco_dict = ARUCO_DICTS[(marker_bits, dict_size)]
+        aruco_dict = aruco.getPredefinedDictionary(
+            ARUCO_DICTS[(marker_bits, dict_size)]
+        )
 
     charuco_board = aruco.CharucoBoard_create(
         board_x, board_y, square_length, marker_length, aruco_dict
@@ -456,7 +458,7 @@ def draw_board(
     imboard = charuco_board.draw((img_width, img_height))
     cv2.imwrite(board_name, imboard)
 
-    if len(save) > 0:
+    if save:
         write_board(
             save,
             board_x,
@@ -469,7 +471,12 @@ def draw_board(
 
 
 @click.command()
-@click.option("--board_name", type=str, required=True, help="Path to save the file to.")
+@click.option(
+    "--board_name",
+    type=str,
+    required=True,
+    help="Path to save the image file to. Must end in .jpg",
+)
 @click.option(
     "--board_x",
     type=int,
