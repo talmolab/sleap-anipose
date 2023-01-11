@@ -393,10 +393,10 @@ def reproject(
     )
 
     if fname:
-        for i, cam in enumerate(cams):
-            with h5py.File(fname, "w") as f:
+        with h5py.File(fname, "w") as f:
+            for i, cam in enumerate(cams):
                 f.create_dataset(
-                    f"{cam}_tracks",
+                    name=cam,
                     data=reprojections[i],
                     chunks=True,
                     compression="gzip",
