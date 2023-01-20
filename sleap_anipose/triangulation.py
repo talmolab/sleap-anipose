@@ -347,11 +347,11 @@ def reproject(
             pointing to its saved file. The order of the cameras in this object
             determines the order of the reprojections along the cameras axis.
         frames: A tuple structured as (start_frame, end_frame) containing the frame
-            range to triangulate. The range is (inclusive, exclusive) and will be
+            range to reproject. The range is (inclusive, exclusive) and will be
             considered as the entire video if not otherwise specified.
         excluded_views: Names (not paths) of camera views to be excluded from
-            triangulation. If not given, all views will be used.
-        fname: The file path to save the triangulated points to (must end in .h5). Will
+            reprojection. If not given, all views will be used.
+        fname: The file path to save the reprojected points to (must end in .h5). Will
             not save unless a non-empty string is given.
 
     Returns:
@@ -402,7 +402,7 @@ def reproject(
                     compression="gzip",
                     compression_opts=1,
                 )
-                f[f"{cam}_tracks"].attrs[
+                f[cam].attrs[
                     "Description"
                 ] = f"Shape: (n_frames, n_tracks, n_nodes, 2)."
 
@@ -423,14 +423,14 @@ def reproject(
     "--fname",
     type=str,
     required=True,
-    help="The file path to save the triangulated points to (must end in .h5).",
+    help="The file path to save the reprojected points to (must end in .h5).",
 )
 @click.option(
     "--frames",
     nargs=2,
     type=int,
     default=(-1, -1),
-    help="The range of frames (inclusive to exclusive) to triangulate over.",
+    help="The range of frames (inclusive to exclusive) to reproject over.",
 )
 @click.option(
     "--excluded_views",
@@ -438,7 +438,7 @@ def reproject(
     type=str,
     default=("ALL_VIEWS",),
     help=(
-        "Names (not paths) of camera views to be excluded from triangulation. Specified"
+        "Names (not paths) of camera views to be excluded from reprojection. Specified"
         " via multiple calls, i.e. --excluded_views top --excluded_views side. If not "
         "specified, all views will be used."
     ),
