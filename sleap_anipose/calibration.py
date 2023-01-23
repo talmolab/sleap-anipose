@@ -583,14 +583,15 @@ def calibrate(
         metadata_fname: File path to save the calibration metadata to (must end in .h5).
             Will not save unless a non-empty string is given.
         histogram_path: Path to save the histogram of reprojection errors to. Will not
-            save unless a non-empty string is given.
+            save unless a non-empty string is given for reproj_path and metadata_fname.
         reproj_path: Path pointing to the session to save the board reprojection images
-            to. Will not save unless a non-empty string is given.
+            to. Will not save unless a non-empty string is given for histogram_path and
+            metadata_fname.
 
     Returns:
         cgroup: A CameraGroup object containing all the camera parameters for
             each view. If save flag is set, saved as 'calibration.toml'.
-        metadata: A tuple with the following entries:
+        metadata: If metadata_fname is given, a tuple with the following entries:
             frames: A length n_frames list of the indices of calibration board
                 images that had sufficient detections across all views.
             detections: A (n_cams, n_frames, n_corners, 2) array of the detected
@@ -631,29 +632,34 @@ def calibrate(
         )
 
     _, corners = cgroup.calibrate_videos(calib_videos, calib_board)
-    frames, detections, triangulations, reprojections = get_metadata(
-        corners, cgroup, metadata_fname
-    )
-
-    if histogram_path:
-        make_histogram(detections, reprojections, histogram_path)
-
-    if reproj_path:
-        make_reproj_imgs(
-            detections,
-            reprojections,
-            frames,
-            session,
-            excluded_views,
-            n_samples=4,
-            save_path=reproj_path,
-        )
 
     if calib_fname:
         cgroup.dump(calib_fname)
 
-    metadata = (frames, detections, triangulations, reprojections)
-    return (cgroup, metadata)
+    if metadata_fname:
+        frames, detections, triangulations, reprojections = get_metadata(
+            corners, cgroup, metadata_fname
+        )
+
+        if histogram_path:
+            make_histogram(detections, reprojections, histogram_path)
+
+        if reproj_path:
+            make_reproj_imgs(
+                detections,
+                reprojections,
+                frames,
+                session,
+                excluded_views,
+                n_samples=4,
+                save_path=reproj_path,
+            )
+
+        metadata = (frames, detections, triangulations, reprojections)
+        return (cgroup, metadata)
+
+    else:
+        return cgroup
 
 
 @click.command()

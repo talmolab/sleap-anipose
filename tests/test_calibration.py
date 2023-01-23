@@ -15,7 +15,7 @@ def test_calibrate(minimal_session, tmp_path, excluded_views):
     tmp_calib = tmp_path / "calibration"
     tmp_calib.mkdir()
     save_path = (tmp_calib / "calibration.toml").as_posix()
-    cgroup, _ = calibrate(minimal_session, board, excluded_views, save_path)
+    cgroup = calibrate(minimal_session, board, excluded_views, save_path)
 
     # Testing the basics of the calibration.
     cam_names = [
