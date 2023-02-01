@@ -31,7 +31,10 @@ def load_view(view: str, frames: Tuple[int] = ()) -> np.ndarray:
 
 
 def load_tracks(
-    session: str, frames: Tuple[int] = (), excluded_views: Tuple[str] = ()
+    session: str,
+    frames: Tuple[int] = (),
+    cams: Tuple[str] = (),
+    excluded_views: Tuple[str] = (),
 ) -> np.ndarray:
     """Load all view tracks for a session folder.
 
@@ -41,17 +44,25 @@ def load_tracks(
         frames: A tuple structured as (start_frame, end_frame) containing the frame
             range to load from each video. The range is (inclusive, exclusive) and will
             be considered as the entire video if not otherwise specified.
-        excluded_views: Names (not paths) of camera views to be excluded. If non given,
+        cams: Tuple of camera names specifying order of views to load tracks in. If not
+            given, will load views in the alphabetic order of the folders found in the
+            given session.
+        excluded_views: Names (not paths) of camera views to be excluded. If not given,
             all views will be used.
 
     Returns:
         A (n_views, n_frames, n_tracks, n_nodes, 2) shape ndarray of the tracks.
     """
-    views = [
-        x
-        for x in Path(session).iterdir()
-        if x.is_dir() and x.name not in excluded_views
-    ]
+    if cams:
+        views = [Path(session) / x for x in cams if x not in excluded_views]
+    else:
+        views = sorted(
+            [
+                x
+                for x in Path(session).iterdir()
+                if x.is_dir() and x.name not in excluded_views
+            ]
+        )
     tracks = np.stack([load_view(view, frames) for view in views], axis=0)
     return tracks
 
@@ -109,15 +120,6 @@ def triangulate(
         A matrix of shape (n_frames, n_tracks, n_nodes, 3) containing the triangulated
         3D points.
     """
-    if type(p2d) == str:
-        points_2d = load_tracks(p2d, frames, excluded_views)
-    else:
-        # TODO: Decouple view exclusion from input raw 2D coordinates
-        if frames:
-            points_2d = p2d.copy()[:, frames[0] : frames[1]]
-        else:
-            points_2d = p2d.copy()
-
     if type(calib) == str:
         full_cgroup = CameraGroup.load(calib)
     else:
@@ -133,6 +135,17 @@ def triangulate(
         )
     else:
         cgroup = full_cgroup
+
+    if type(p2d) == str:
+        points_2d = load_tracks(
+            p2d, frames=frames, cams=cgroup.get_names(), excluded_views=excluded_views
+        )
+    else:
+        # TODO: Decouple view exclusion from input raw 2D coordinates
+        if frames:
+            points_2d = p2d.copy()[:, frames[0] : frames[1]]
+        else:
+            points_2d = p2d.copy()
 
     n_tracks = points_2d.shape[2]
 

@@ -92,11 +92,13 @@ def make_reproj_imgs(
             string, images will not be saved. Images are saved to the view subfolders in
             this folder as 'save_path / view / reprojection-{frame}.png'.
     """
-    cam_folders = [
-        x
-        for x in Path(session).iterdir()
-        if x.is_dir() and x.name not in excluded_views
-    ]
+    cam_folders = sorted(
+        [
+            x
+            for x in Path(session).iterdir()
+            if x.is_dir() and x.name not in excluded_views
+        ]
+    )
     sampled_frames = sample(frames, n_samples)
 
     for i, cam in enumerate(cam_folders):
@@ -265,6 +267,7 @@ def make_calibration_videos(view: str) -> str:
         / "calibration_images"
         / f"{session_name}-{Path(view).name}-calibration.mp4"
     )
+    # TODO: Add other image formats.
     calibration_imgs = list(Path(view).glob("*/*.jpg"))
     writer = imageio.get_writer(fname, fps=30)
 
@@ -601,11 +604,13 @@ def calibrate(
             reprojections: A (n_cams, n_frames, n_corners, 2) array of the
                 reprojected calibration board corners.
     """
-    cams = [
-        x
-        for x in Path(session).iterdir()
-        if x.is_dir() and x.name not in excluded_views
-    ]
+    cams = sorted(
+        [
+            x
+            for x in Path(session).iterdir()
+            if x.is_dir() and x.name not in excluded_views
+        ]
+    )
     cam_names = [x.name for x in cams]
     cgroup = CameraGroup.from_names(cam_names)
 
