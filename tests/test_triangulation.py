@@ -28,7 +28,7 @@ def test_triangulate(minimal_session, tmp_path, frames, excluded_views):
     # Testing shape of the output matrices.
     _, n_frames, n_tracks, n_nodes, _ = load_tracks(
         minimal_session, frames, excluded_views
-    ).shape
+    )[0].shape
     assert n_frames == frames[1] - frames[0]
     assert p3d.shape == (n_frames, n_tracks, n_nodes, 3)
 
@@ -62,12 +62,14 @@ def test_reproject(minimal_session, frames, excluded_views):
 
 @pytest.mark.parametrize("frames,excluded_views", [((25, 75), ("side",))])
 def test_load_tracks(minimal_session, frames, excluded_views):
-    p2d = load_tracks(minimal_session, frames, excluded_views)
-    cams = [
-        x.name
-        for x in Path(minimal_session).iterdir()
-        if x.is_dir() and x.name not in excluded_views
-    ]
+    p2d, _ = load_tracks(minimal_session, frames=frames, excluded_views=excluded_views)
+    cams = sorted(
+        [
+            x.name
+            for x in Path(minimal_session).iterdir()
+            if x.is_dir() and x.name not in excluded_views
+        ]
+    )
     assert p2d.shape[0] == len(cams)
     assert p2d.shape[1] == frames[1] - frames[0]
     assert p2d.shape[-1] == 2

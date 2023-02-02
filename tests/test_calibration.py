@@ -18,11 +18,13 @@ def test_calibrate(minimal_session, tmp_path, excluded_views):
     cgroup = calibrate(minimal_session, board, excluded_views, save_path)
 
     # Testing the basics of the calibration.
-    cam_names = [
-        x.name
-        for x in Path(minimal_session).iterdir()
-        if x.is_dir() and x.name not in excluded_views
-    ]
+    cam_names = sorted(
+        [
+            x.name
+            for x in Path(minimal_session).iterdir()
+            if x.is_dir() and x.name not in excluded_views
+        ]
+    )
     assert cgroup.get_names() == cam_names
 
     # Testing the shapes of the output matrices.
