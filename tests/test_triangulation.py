@@ -28,7 +28,7 @@ def test_triangulate(minimal_session, tmp_path, frames, excluded_views):
     # Testing shape of the output matrices.
     _, n_frames, n_tracks, n_nodes, _ = load_tracks(
         minimal_session, frames, excluded_views
-    ).shape
+    )[0].shape
     assert n_frames == frames[1] - frames[0]
     assert p3d.shape == (n_frames, n_tracks, n_nodes, 3)
 
