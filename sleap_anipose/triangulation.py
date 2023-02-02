@@ -51,7 +51,8 @@ def load_tracks(
             all views will be used.
 
     Returns:
-        A (n_views, n_frames, n_tracks, n_nodes, 2) shape ndarray of the tracks.
+        tracks: A (n_views, n_frames, n_tracks, n_nodes, 2) shape ndarray of 2D poses.
+        views: A list of the camera views accessed in the order they were accessed in.
     """
     if cams:
         views = [Path(session) / x for x in cams if x not in excluded_views]
@@ -64,7 +65,7 @@ def load_tracks(
             ]
         )
     tracks = np.stack([load_view(view, frames) for view in views], axis=0)
-    return tracks
+    return tracks, views
 
 
 def triangulate(
@@ -137,9 +138,17 @@ def triangulate(
         cgroup = full_cgroup
 
     if type(p2d) == str:
-        points_2d = load_tracks(
-            p2d, frames=frames, cams=cgroup.get_names(), excluded_views=excluded_views
+        cam_order = cgroup.get_names()
+        points_2d, track_order = load_tracks(
+            p2d, frames=frames, cams=cam_order, excluded_views=excluded_views
         )
+
+        # Check camera order and track order
+        if [x.name for x in track_order] != cam_order:
+            print("Loaded track order does not equal camera order.")
+            print(f"Camera order: {cgroup.get_names()}")
+            print(f"Track order:{[x.name for x in track_order]}")
+
     else:
         # TODO: Decouple view exclusion from input raw 2D coordinates
         if frames:
@@ -177,19 +186,11 @@ def triangulate(
                 compression="gzip",
                 compression_opts=1,
             )
-
-            if type(p2d) == str:
-                cam_names = [
-                    x.name
-                    for x in Path(p2d).iterdir()
-                    if x.is_dir() and x.name not in excluded_views
-                ]
-                tracks_descriptor = (
-                    "Shape: (n_frames, n_tracks, n_nodes, 3). "
-                    f"Camera views used: {cam_names}"
-                )
-            else:
-                tracks_descriptor = "Shape: (n_frames, n_tracks, n_nodes, 3)."
+            tracks_descriptor = (
+                "Shape: (n_frames, n_tracks, n_nodes, 3). "
+                f"In calibration camera order: {cam_order}, "
+                f"In session camera order: {[x.name for x in track_order]}"
+            )
             f["tracks"].attrs["Description"] = tracks_descriptor
 
             if frames:

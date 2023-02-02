@@ -62,7 +62,7 @@ def test_reproject(minimal_session, frames, excluded_views):
 
 @pytest.mark.parametrize("frames,excluded_views", [((25, 75), ("side",))])
 def test_load_tracks(minimal_session, frames, excluded_views):
-    p2d = load_tracks(minimal_session, frames=frames, excluded_views=excluded_views)
+    p2d, _ = load_tracks(minimal_session, frames=frames, excluded_views=excluded_views)
     cams = sorted(
         [
             x.name
