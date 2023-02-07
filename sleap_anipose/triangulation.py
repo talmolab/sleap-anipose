@@ -137,8 +137,9 @@ def triangulate(
     else:
         cgroup = full_cgroup
 
+    cam_order = cgroup.get_names()
+
     if type(p2d) == str:
-        cam_order = cgroup.get_names()
         points_2d, track_order = load_tracks(
             p2d, frames=frames, cams=cam_order, excluded_views=excluded_views
         )
@@ -186,11 +187,19 @@ def triangulate(
                 compression="gzip",
                 compression_opts=1,
             )
-            tracks_descriptor = (
-                "Shape: (n_frames, n_tracks, n_nodes, 3). "
-                f"In calibration camera order: {cam_order}, "
-                f"In session camera order: {[x.name for x in track_order]}"
-            )
+
+            if type(p2d) == str:
+                tracks_descriptor = (
+                    "Shape: (n_frames, n_tracks, n_nodes, 3). "
+                    f"In calibration camera order: {cam_order}, "
+                    f"In session camera order: {[x.name for x in track_order]}"
+                )
+            else:
+                tracks_descriptor = (
+                    "Shape: (n_frames, n_tracks, n_nodes, 3). "
+                    f"In calibration camera order: {cam_order}."
+                )
+
             f["tracks"].attrs["Description"] = tracks_descriptor
 
             if frames:
