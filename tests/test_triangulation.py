@@ -8,8 +8,8 @@ import h5py
 import pytest
 
 
-@pytest.mark.parametrize("frames,excluded_views", [((25, 75), ("side",))])
-def test_triangulate(minimal_session, tmp_path, frames, excluded_views):
+@pytest.mark.parametrize("frames,excluded_views,ransac", [((25, 75), ("side",), True)])
+def test_triangulate(minimal_session, tmp_path, frames, excluded_views, ransac):
     calibration = Path(minimal_session) / "calibration.toml"
     assert calibration.exists()
 
@@ -22,6 +22,7 @@ def test_triangulate(minimal_session, tmp_path, frames, excluded_views):
         calibration.as_posix(),
         frames,
         excluded_views,
+        ransac,
         fname.as_posix(),
     )
 

@@ -44,6 +44,7 @@ def load_tracks(
         frames: A tuple structured as (start_frame, end_frame) containing the frame
             range to load from each video. The range is (inclusive, exclusive) and will
             be considered as the entire video if not otherwise specified.
+        # TODO: MAKE camera order a mandatory input, require calibration.
         cams: Tuple of camera names specifying order of views to load tracks in. If not
             given, will load views in the alphabetic order of the folders found in the
             given session.
@@ -73,6 +74,7 @@ def triangulate(
     calib: Union[CameraGroup, str],
     frames: Tuple[int] = (),
     excluded_views: Tuple[str] = (),
+    ransac: bool = False,
     fname: str = "",
     disp_progress: bool = False,
     **kwargs,
@@ -92,6 +94,8 @@ def triangulate(
             considered as the entire video if not otherwise specified.
         excluded_views: Names (not paths) of camera views to be excluded from
             triangulation. If not given, all views will be used.
+        ransac: A flag determining whether or not to use RANSAC based triangulation,
+            false by default.
         fname: The file path to save the triangulated points to (must end in .h5). Will
             not save unless a non-empty string is given.
         disp_progress: A flag determining whether or not to show triangulation
@@ -171,7 +175,10 @@ def triangulate(
     points_3d = np.stack(
         [
             cgroup.triangulate_optim(
-                points_2d[:, :, track], init_progress=disp_progress, **kwargs
+                points_2d[:, :, track],
+                init_ransac=ransac,
+                init_progress=disp_progress,
+                **kwargs,
             )
             for track in range(n_tracks)
         ],
@@ -248,6 +255,15 @@ def triangulate(
     ),
 )
 @click.option(
+    "--ransac",
+    is_flag=True,
+    default=False,
+    help=(
+        "Flag determining whether or not to use RANSAC based triangulation, "
+        "false by default."
+    ),
+)
+@click.option(
     "--disp_progress",
     is_flag=True,
     default=False,
@@ -316,6 +332,7 @@ def triangulate_cli(
     fname,
     frames,
     excluded_views,
+    ransac,
     disp_progress,
     constraints,
     constraints_weak,
@@ -342,6 +359,7 @@ def triangulate_cli(
         frames,
         excluded_views,
         fname,
+        ransac,
         disp_progress,
         constraints=constraints,
         constraints_weak=constraints_weak,
