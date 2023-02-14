@@ -56,14 +56,18 @@ def load_tracks(
         If the camera order can not be deduced, None will be returned.
     """
     if cams:
-        views = [f"{session}/{x}" for x in cams if x not in excluded_views]
+        views = [
+            (Path(session) / x).as_posix() for x in cams if x not in excluded_views
+        ]
     else:
         calib = Path(session) / "calibration.toml"
         if not calib.exists():
             return None
         else:
             order = CameraGroup.load(calib).get_names()
-            views = [f"{session}/{x}" for x in order if x not in excluded_views]
+            views = [
+                (Path(session) / x).as_posix() for x in order if x not in excluded_views
+            ]
 
     tracks = np.stack([load_view(view, frames) for view in views], axis=0)
     return tracks, views
