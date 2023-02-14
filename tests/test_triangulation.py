@@ -67,9 +67,7 @@ def test_load_tracks(minimal_session, frames, excluded_views):
         minimal_session, frames=frames, excluded_views=excluded_views
     )
     cams = CameraGroup.load("minimal_session/calibration.toml").get_names()
-    cams = [
-        (Path(minimal_session) / x).as_posix() for x in cams if x not in excluded_views
-    ]
+    cams = [Path(minimal_session) / x for x in cams if x not in excluded_views]
     assert cams == views
     assert p2d.shape[0] == len(cams)
     assert p2d.shape[1] == frames[1] - frames[0]
