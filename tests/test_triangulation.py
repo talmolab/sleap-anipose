@@ -8,8 +8,8 @@ import h5py
 import pytest
 
 
-@pytest.mark.parametrize("frames,excluded_views", [((25, 75), ("side",))])
-def test_triangulate(minimal_session, tmp_path, frames, excluded_views):
+@pytest.mark.parametrize("frames,excluded_views,ransac", [((25, 75), ("side",), True)])
+def test_triangulate(minimal_session, tmp_path, frames, excluded_views, ransac):
     calibration = Path(minimal_session) / "calibration.toml"
     assert calibration.exists()
 
@@ -22,6 +22,7 @@ def test_triangulate(minimal_session, tmp_path, frames, excluded_views):
         calibration.as_posix(),
         frames,
         excluded_views,
+        ransac,
         fname.as_posix(),
     )
 
@@ -62,14 +63,12 @@ def test_reproject(minimal_session, frames, excluded_views):
 
 @pytest.mark.parametrize("frames,excluded_views", [((25, 75), ("side",))])
 def test_load_tracks(minimal_session, frames, excluded_views):
-    p2d, _ = load_tracks(minimal_session, frames=frames, excluded_views=excluded_views)
-    cams = sorted(
-        [
-            x.name
-            for x in Path(minimal_session).iterdir()
-            if x.is_dir() and x.name not in excluded_views
-        ]
+    p2d, views = load_tracks(
+        minimal_session, frames=frames, excluded_views=excluded_views
     )
+    cams = CameraGroup.load((Path(minimal_session) / "calibration.toml")).get_names()
+    cams = [Path(minimal_session) / x for x in cams if x not in excluded_views]
+    assert cams == views
     assert p2d.shape[0] == len(cams)
     assert p2d.shape[1] == frames[1] - frames[0]
     assert p2d.shape[-1] == 2
