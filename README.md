@@ -97,7 +97,7 @@ The `histogram_path` argument points to the path to save the histogram of reproj
 8. Generate the triangulated 3D points based on your tracking and calibration:
 
 ```
-slap-triangulate --p2d my/path --calib my/path/calibration.toml --fname p3d.h5 --frames 1000 2000 --excluded_views side --excluded_view top --fname my/path/points3d.h5 --disp_progress True \
+slap-triangulate --p2d my/path --calib my/path/calibration.toml --fname my/path/points3d.h5 --frames 1000 2000 --excluded_views side --excluded_view top --disp_progress True \
 --constraints 0 1 --constraints 2 3 --weak_constraints 4 5 --scale_smooth 3 --scale_length 4 --scale_length_weak 1 --reproj_error_threshold 10 --reproj_loss l2 --n_deriv_smooth 2
 ```
 

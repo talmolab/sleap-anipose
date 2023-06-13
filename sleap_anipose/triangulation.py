@@ -21,7 +21,7 @@ def load_view(view: str, frames: Tuple[int] = ()) -> np.ndarray:
     Returns:
         A (n_frames, n_tracks, n_nodes, 2) shape ndarray of the 2D points.
     """
-    h5_file = list(Path(view).glob("*analysis.h5"))[0].as_posix()
+    h5_file = list(Path(view).glob("*slp.analysis.h5"))[0].as_posix()
     with h5py.File(h5_file, "r") as f:
         track = f["tracks"][:].transpose((-1, 0, -2, 1))
     if frames:
