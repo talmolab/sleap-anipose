@@ -193,7 +193,7 @@ def get_metadata(
     )
 
     corners_3d = cgroup.triangulate_optim(common_corners)
-    corners_reproj = cgroup.project(corners_3d.reshape((-1, 2))).reshape(
+    corners_reproj = cgroup.project(corners_3d).reshape(
         (len(raw_detections), len(common_frames), -1, 2)
     )
 
