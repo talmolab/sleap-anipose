@@ -107,7 +107,7 @@ def make_reproj_imgs(
 
         for frame in sampled_frames:
             img = vid.get_data(frame)
-            
+
             fig = plt.figure(figsize=(14, 12), dpi=120, facecolor="w")
             plt.scatter(
                 detections[i, frames.index(frame), :, 0], 
@@ -136,7 +136,6 @@ def make_reproj_imgs(
 
             if len(save_path) > 0:
                 fname = cam / f"reprojection-{frame}.png"
-                print(f"fname = {fname}")
                 plt.savefig(fname, format="png", dpi="figure")
                 plt.close()
 
