@@ -63,15 +63,14 @@ def make_histogram(
     if save:
         plt.savefig(save_path, format="png", dpi="figure")
 
-
 def make_reproj_imgs(
-    detections: np.ndarray,
-    reprojections: np.ndarray,
-    frames: List[int],
-    session: str,
-    excluded_views: Tuple[str] = (),
-    n_samples=4,
-    save_path: str = "",
+        detections: np.ndarray,
+        reprojections: np.ndarray,
+        frames: List[int],
+        session: str,
+        excluded_views: Tuple[str] = (),
+        n_samples=4,
+        save_path: str = "",
 ):
     """Make visualization of calibrated board corners.
 
@@ -92,6 +91,7 @@ def make_reproj_imgs(
             string, images will not be saved. Images are saved to the view subfolders in
             this folder as 'save_path / view / reprojection-{frame}.png'.
     """
+
     cam_folders = sorted(
         [
             x
@@ -101,31 +101,16 @@ def make_reproj_imgs(
     )
     sampled_frames = sample(frames, n_samples)
 
-    ## Test to see if the sampled frames are in the frames list
-    assert all(
-        frame in frames for frame in sampled_frames
-    ), "Sampled frames are not in the original frames list."
-
-    print(f"FRAMES: {frames}")
-    print(f"SAMPLED FRAMES: {sampled_frames}")
-    print(f"cam_folders: {cam_folders}")
-
     for i, cam in enumerate(cam_folders):
-        print(f"cam: {cam}")
+        # grab file name 
+        image_path = list(cam.glob(f"*calibration_images/*.mp4"))
+
+        # open mp4 
+        vid = imageio.get_reader(image_path[0],  'ffmpeg')
+
         for frame in sampled_frames:
-            image_path = list(cam.glob(f"*/*{frame}.jpg"))
-            print(f"image_path: {image_path}")
-            img = imageio.imread(image_path[0]) # looks for image with frame number
+            img = vid.get_data(frame)
 
-            print(f"detection shape: {detections.shape}")
-            print(f"reprojection shape: {reprojections.shape}")
-            #print(f"frames[frame] = {frames[frame]}")
-            print(f"frame = {frame}")
-            print(f"frames.index(frame) = {frames.index(frame)}")
-
-            assert detections.shape == reprojections.shape, "Detections and reprojections must have the same shape."
-            #assert frames[frame] == frames.index(frame) #this breaks things
-            
             fig = plt.figure(figsize=(14, 12), dpi=120, facecolor="w")
             plt.scatter(
                 detections[i, frames.index(frame), :, 0], ## could it be frames[frame] vs frames.index(frame)
@@ -156,7 +141,7 @@ def make_reproj_imgs(
                 fname = cam / f"reprojection-{frame}.png"
                 print(f"fname = {fname}")
                 plt.savefig(fname, format="png", dpi="figure")
-
+                plt.close()
 
 def get_metadata(
     corner_data: List[List[Dict]], cgroup: CameraGroup, save_path: str = ""
