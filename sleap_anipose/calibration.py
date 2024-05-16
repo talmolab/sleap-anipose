@@ -64,13 +64,13 @@ def make_histogram(
         plt.savefig(save_path, format="png", dpi="figure")
 
 def make_reproj_imgs(
-        detections: np.ndarray,
-        reprojections: np.ndarray,
-        frames: List[int],
-        session: str,
-        excluded_views: Tuple[str] = (),
-        n_samples=4,
-        save_path: str = "",
+    detections: np.ndarray,
+    reprojections: np.ndarray,
+    frames: List[int],
+    session: str,
+    excluded_views: Tuple[str] = (),
+    n_samples=4,
+    save_path: str = "",
 ):
     """Make visualization of calibrated board corners.
 
