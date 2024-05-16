@@ -102,18 +102,15 @@ def make_reproj_imgs(
     sampled_frames = sample(frames, n_samples)
 
     for i, cam in enumerate(cam_folders):
-        # grab file name 
         image_path = list(cam.glob(f"*calibration_images/*.mp4"))
-
-        # open mp4 
         vid = imageio.get_reader(image_path[0],  'ffmpeg')
 
         for frame in sampled_frames:
             img = vid.get_data(frame)
-
+            
             fig = plt.figure(figsize=(14, 12), dpi=120, facecolor="w")
             plt.scatter(
-                detections[i, frames.index(frame), :, 0], ## could it be frames[frame] vs frames.index(frame)
+                detections[i, frames.index(frame), :, 0], 
                 detections[i, frames.index(frame), :, 1],
                 s=300,
                 color="r",
