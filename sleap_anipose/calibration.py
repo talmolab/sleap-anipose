@@ -63,6 +63,7 @@ def make_histogram(
     if save:
         plt.savefig(save_path, format="png", dpi="figure")
 
+
 def make_reproj_imgs(
     detections: np.ndarray,
     reprojections: np.ndarray,
@@ -103,14 +104,14 @@ def make_reproj_imgs(
 
     for i, cam in enumerate(cam_folders):
         image_path = list(cam.glob(f"*calibration_images/*.mp4"))
-        vid = imageio.get_reader(image_path[0],  'ffmpeg')
+        vid = imageio.get_reader(image_path[0], "ffmpeg")
 
         for frame in sampled_frames:
             img = vid.get_data(frame)
 
             fig = plt.figure(figsize=(14, 12), dpi=120, facecolor="w")
             plt.scatter(
-                detections[i, frames.index(frame), :, 0], 
+                detections[i, frames.index(frame), :, 0],
                 detections[i, frames.index(frame), :, 1],
                 s=300,
                 color="r",
@@ -134,10 +135,13 @@ def make_reproj_imgs(
 
             print(f"Save path = {save_path}")
 
-            if len(save_path) > 0:
-                fname = cam / f"reprojection-{frame}.png"
-                plt.savefig(fname, format="png", dpi="figure")
-                plt.close()
+            if len(str(save_path)) > 0:  # Convert to string
+                output_dir = Path(save_path) / cam.name
+                output_dir.mkdir(parents=True, exist_ok=True)
+                output_file = output_dir / f"reprojection-{frame}.png"
+                fig.savefig(output_file.as_posix(), bbox_inches="tight")
+                plt.close(fig)
+
 
 def get_metadata(
     corner_data: List[List[Dict]], cgroup: CameraGroup, save_path: str = ""
