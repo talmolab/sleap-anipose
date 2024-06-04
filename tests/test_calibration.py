@@ -53,6 +53,65 @@ def test_calibrate(minimal_session, tmp_path, excluded_views):
 
 
 @pytest.mark.parametrize("excluded_views", [("side",)])
+def test_make_reproj_imgs(minimal_session, tmp_path, excluded_views):
+    board = read_board((Path(minimal_session) / "board.toml").as_posix())
+    tmp_calib = tmp_path / "calibration"
+    tmp_calib.mkdir()
+
+    # Testing the creation of reprojection images in each camera view folder
+    cam_names = [
+        x.name
+        for x in Path(minimal_session).iterdir()
+        if x.is_dir() and x.name not in excluded_views
+    ]
+
+    for cam in cam_names:
+        if cam not in excluded_views:
+            tmp_cam = tmp_calib / cam
+            tmp_cam.mkdir()
+
+    save_path = (Path(tmp_calib) / "calibration.toml").as_posix()
+    cgroup = calibrate(minimal_session, board, excluded_views, save_path)
+
+    calib_videos = []
+    for cam in cam_names:
+        cam_path = Path(minimal_session) / cam  # Ensure cam is treated as Path
+        calib_video = list(cam_path.glob("*/*calibration.mp4"))
+        if calib_video:  # Check if the list is not empty
+            calib_videos.append([calib_video[0].as_posix()])
+
+    _, corners = cgroup.calibrate_videos(calib_videos, board)
+
+    metadata_fname = (Path(tmp_calib) / "calibration.metadata.h5").as_posix()
+
+    frames, detections, triangulations, reprojections = get_metadata(
+        corners, cgroup, metadata_fname
+    )
+
+    make_reproj_imgs(
+        detections,
+        reprojections,
+        frames,
+        minimal_session,
+        excluded_views,
+        n_samples=4,
+        save_path=tmp_calib,
+    )
+
+    reproj_images = []
+    for cam_name in cam_names:
+        cam_path = tmp_calib / cam_name
+        cam_reproj_images = list(cam_path.glob("reprojection-*.png"))
+        reproj_images.extend(cam_reproj_images)
+        print(f"Reprojection images found in {tmp_calib}: {cam_reproj_images}")
+
+    assert len(reproj_images) > 0, "No reprojection images were created."
+    assert (
+        len(reproj_images) == 12
+    ), "Expected number of reprojection images does not match."
+
+
+@pytest.mark.parametrize("excluded_views", [("side",)])
 def test_get_metadata(minimal_session, tmp_path, excluded_views):
     cams = [
         x
