@@ -102,8 +102,12 @@ def make_reproj_imgs(
     sampled_frames = sample(frames, n_samples)
 
     for i, cam in enumerate(cam_folders):
+        image_path = list(cam.glob(f"*calibration_images/*.mp4"))
+        vid = imageio.get_reader(image_path[0], "ffmpeg")
+
         for frame in sampled_frames:
-            img = imageio.imread(list(cam.glob(f"*/*{frame}.jpg"))[0])
+            img = vid.get_data(frame)
+
             fig = plt.figure(figsize=(14, 12), dpi=120, facecolor="w")
             plt.scatter(
                 detections[i, frames.index(frame), :, 0],
@@ -128,9 +132,14 @@ def make_reproj_imgs(
             plt.yticks([])
             plt.legend()
 
-            if len(save_path) > 0:
-                fname = cam / f"reprojection-{frame}.png"
-                plt.savefig(fname, format="png", dpi="figure")
+            print(f"Save path = {save_path}")
+
+            if len(str(save_path)) > 0:  # Convert to string
+                output_dir = Path(save_path) / cam.name
+                output_dir.mkdir(parents=True, exist_ok=True)
+                output_file = output_dir / f"reprojection-{frame}.png"
+                fig.savefig(output_file.as_posix(), bbox_inches="tight")
+                plt.close(fig)
 
 
 def get_metadata(
