@@ -92,7 +92,6 @@ def make_reproj_imgs(
             string, images will not be saved. Images are saved to the view subfolders in
             this folder as 'save_path / view / reprojection-{frame}.png'.
     """
-
     cam_folders = sorted(
         [
             x
