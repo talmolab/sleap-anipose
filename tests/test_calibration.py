@@ -8,6 +8,7 @@ import numpy as np
 import pytest
 from aniposelib.boards import CalibrationObject
 from aniposelib.cameras import CameraGroup
+from click.testing import CliRunner
 
 from sleap_anipose.calibration import *
 
@@ -172,7 +173,6 @@ def test_get_metadata(minimal_session, tmp_path, excluded_views):
 
 def read_board_and_assert(board_path: str, is_charuco: bool):
     """Helper function for testing read_board."""
-
     board = read_board(board_path)
     file_dict = toml.load(board_path)
 
@@ -293,7 +293,35 @@ def test_write_board_cli(tmp_path, board_toml):
         marker_bits = None
         dict_size = None
 
-    # TODO(LM): Call the CLI command to write the board.
-    assert Path(board_path).exists()
+    runner = CliRunner()
+    args = [
+        "--board_name",
+        board_path,
+        "--board_x",
+        board_x,
+        "--board_y",
+        board_y,
+        "--square_length",
+        square_length,
+    ]
 
+    if board_toml == "board.toml":
+        args.extend(
+            [
+                "--marker_length",
+                marker_length,
+                "--marker_bits",
+                marker_bits,
+                "--dict_size",
+                dict_size,
+            ]
+        )
+
+    result = runner.invoke(
+        write_board_cli,
+        args,
+    )
+    assert result.exit_code == 0
+
+    assert Path(board_path).exists()
     read_board_and_assert(board_path=board_path, is_charuco=board_toml == "board.toml")
