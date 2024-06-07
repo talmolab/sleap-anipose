@@ -1,12 +1,15 @@
 """Tests for calibration."""
 
-import numpy as np
-from sleap_anipose.calibration import *
-from pathlib import Path
-from aniposelib.cameras import CameraGroup
-import h5py
 import toml
+from pathlib import Path
+
+import h5py
+import numpy as np
 import pytest
+from aniposelib.boards import CalibrationObject
+from aniposelib.cameras import CameraGroup
+
+from sleap_anipose.calibration import *
 
 
 @pytest.mark.parametrize("excluded_views", [("side",)])
@@ -167,33 +170,130 @@ def test_get_metadata(minimal_session, tmp_path, excluded_views):
     )
 
 
-def test_read_board(minimal_session):
-    board_path = Path(minimal_session) / "board.toml"
-    assert board_path.exists()
-    board = read_board(board_path.as_posix())
+def read_board_and_assert(board_path: str, is_charuco: bool):
+    """Helper function for testing read_board."""
+
+    board = read_board(board_path)
     file_dict = toml.load(board_path)
 
-    assert board.get_size() == (file_dict["board_x"], file_dict["board_y"])
-    assert board.get_square_length() == file_dict["square_length"]
+    assert board.squaresX == file_dict["board_x"]
+    assert board.squaresY == file_dict["board_y"]
+    assert board.square_length == file_dict["square_length"]
+
+    if is_charuco:
+        assert isinstance(board, CharucoBoard)
+        assert board.marker_length == file_dict["marker_length"]
+    else:
+        assert isinstance(board, Checkerboard)
 
 
-def test_write_board(tmp_path):
+@pytest.mark.parametrize("board_toml", ["board.toml", "board_checker.toml"])
+def test_read_board(minimal_session, board_toml):
+
+    board_path: Path = Path(minimal_session) / board_toml
+    read_board_and_assert(
+        board_path=board_path.as_posix(), is_charuco=board_toml == "board.toml"
+    )
+
+
+@pytest.mark.parametrize("board_toml", ["board.toml", "board_checker.toml"])
+def test_write_board(tmp_path, board_toml):
     tmp_board = tmp_path / "boards"
     tmp_board.mkdir()
-    board_path = (tmp_board / "board.toml").as_posix()
-    board_x = 0
-    board_y = 0
-    square_length = 0.0
-    marker_length = 0.0
-    marker_bits = 4
-    dict_size = 100
+    board_path = (tmp_board / board_toml).as_posix()
+    board_x = 2
+    board_y = 2
+    square_length = 3.0
+
+    if board_toml == "board.toml":
+        marker_length = 2.0
+        marker_bits = 5
+        dict_size = 50
+    else:
+        marker_length = None
+        marker_bits = None
+        dict_size = None
+
     write_board(
-        board_path,
-        board_x,
-        board_y,
-        square_length,
-        marker_length,
-        marker_bits,
-        dict_size,
+        board_name=board_path,
+        board_x=board_x,
+        board_y=board_y,
+        square_length=square_length,
+        marker_length=marker_length,
+        marker_bits=marker_bits,
+        dict_size=dict_size,
     )
     assert Path(board_path).exists()
+
+    read_board_and_assert(board_path=board_path, is_charuco=board_toml == "board.toml")
+
+
+@pytest.mark.parametrize(
+    "is_charuco",
+    [True, False],
+)
+@pytest.mark.parametrize(
+    "board_type",
+    [str, CalibrationObject, dict],
+)
+def test_determine_board_type(tmp_path, is_charuco, board_type):
+
+    # Determin which board dict to use as ground truth.
+    board_dict = dict(
+        board_x=2,
+        board_y=2,
+        square_length=3.0,
+    )
+    charuco_only_dict = dict(
+        marker_length=2.0,
+        marker_bits=5,
+        dict_size=50,
+    )
+    if is_charuco:
+        board_dict.update(charuco_only_dict)
+        board_obj = CharucoBoard
+    else:
+        board_dict = board_dict
+        board_obj = Checkerboard
+
+    # Write the board to a file if it is a str.
+    if board_type is str:
+        board = (tmp_path / "board.toml").as_posix()
+        write_board(board, **board_dict)
+
+    # Use the board dict if it is a dict.
+    elif board_type is dict:
+        board = board_dict
+
+    # Use the board object if it is a CalibrationObject.
+    else:
+        squaresX = board_dict.pop("board_x")
+        squaresY = board_dict.pop("board_y")
+        board = board_obj(squaresX=squaresX, squaresY=squaresY, **board_dict)
+
+    calib_board = determine_board_type(board)
+    assert isinstance(calib_board, board_obj)
+
+
+@pytest.mark.parametrize("board_toml", ["board.toml", "board_checker.toml"])
+def test_write_board_cli(tmp_path, board_toml):
+    tmp_board = tmp_path / "boards"
+    tmp_board.mkdir()
+    board_path = (tmp_board / board_toml).as_posix()
+    board_x = 2
+    board_y = 2
+    square_length = 3.0
+
+    if board_toml == "board.toml":
+        marker_length = 2.0
+        marker_bits = 5
+        dict_size = 50
+    else:
+        marker_length = None
+        marker_bits = None
+        dict_size = None
+
+    # TODO(LM): Call the CLI command to write the board.
+    assert Path(board_path).exists()
+
+    read_board_and_assert(board_path=board_path, is_charuco=board_toml == "board.toml")
