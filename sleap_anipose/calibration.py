@@ -364,7 +364,6 @@ def write_board(
         dict_size: Size of the dictionary used for marker encoding. Only required for
             Charuco boards.
     """
-
     # Create a dictionary with parameters shared by Charuco and Checkerboard types.
     board_dict = {
         "board_x": board_x,
@@ -625,7 +624,6 @@ def determine_board_type(
     Raises:
         Exception: If the input is invalid.
     """
-
     if isinstance(board, str):
         calib_board = read_board(board)
     elif isinstance(board, CharucoBoard) or isinstance(board, Checkerboard):
