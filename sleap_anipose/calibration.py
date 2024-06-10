@@ -2,12 +2,12 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from aniposelib.boards import CharucoBoard
+from aniposelib.boards import CharucoBoard, Checkerboard
 from aniposelib.cameras import CameraGroup
 import h5py
 import imageio
 from pathlib import Path
-from typing import Tuple, List, Dict, Union
+from typing import Tuple, List, Dict, Union, Optional
 from random import sample
 import toml
 import click
@@ -299,24 +299,33 @@ def make_calibration_videos_cli(session):
     make_calibration_videos(session)
 
 
-def read_board(board_file: str):
+def read_board(board_file: str) -> Union[CharucoBoard, Checkerboard]:
     """Read toml file detailing calibration board.
 
     Args:
         board_file: Path to the calibration board toml file.
 
     Returns:
-        An aniposelib.CharucoBoard object containing the details of the board.
+        Either an aniposelib.CharucoBoard object or an aniposelib.Checkerboard object
+        containing the details of the board.
     """
     board_dict = toml.load(board_file)
-    board = CharucoBoard(
-        board_dict["board_x"],
-        board_dict["board_y"],
-        board_dict["square_length"],
-        board_dict["marker_length"],
-        board_dict["marker_bits"],
-        board_dict["dict_size"],
-    )
+
+    if "marker_length" in board_dict:
+        board = CharucoBoard(
+            squaresX=board_dict["board_x"],
+            squaresY=board_dict["board_y"],
+            square_length=board_dict["square_length"],
+            marker_length=board_dict["marker_length"],
+            marker_bits=board_dict["marker_bits"],
+            dict_size=board_dict["dict_size"],
+        )
+    else:
+        board = Checkerboard(
+            squaresX=board_dict["board_x"],
+            squaresY=board_dict["board_y"],
+            square_length=board_dict["square_length"],
+        )
     return board
 
 
@@ -337,9 +346,9 @@ def write_board(
     board_x: int,
     board_y: int,
     square_length: float,
-    marker_length: float,
-    marker_bits: int,
-    dict_size: int,
+    marker_length: Optional[float] = None,
+    marker_bits: Optional[int] = None,
+    dict_size: Optional[int] = None,
 ):
     """Write a toml file detailing a calibration board.
 
@@ -349,21 +358,33 @@ def write_board(
         board_y: Number of squares along the height of the board.
         square_length: Length of square edge in any measured units.
         marker_length: Length of marker edge in the same measured units as the
-            square length.
-        marker_bits: Number of bits encoded in the marker images.
-        dict_size: Size of the dictionary used for marker encoding.
+            square length. Only required for Charuco boards.
+        marker_bits: Number of bits encoded in the marker images. Only required for
+            Charuco boards.
+        dict_size: Size of the dictionary used for marker encoding. Only required for
+            Charuco boards.
     """
-    if (marker_bits, dict_size) not in ARUCO_DICTS.keys():
-        raise Exception("Invalid marker bits or dictionary size.")
-
+    # Create a dictionary with parameters shared by Charuco and Checkerboard types.
     board_dict = {
         "board_x": board_x,
         "board_y": board_y,
         "square_length": square_length,
-        "marker_length": marker_length,
-        "marker_bits": marker_bits,
-        "dict_size": dict_size,
     }
+
+    # Check if the board is a Charuco board and add the specific parameters.
+    if marker_bits is not None:
+        if (marker_bits, dict_size) not in ARUCO_DICTS.keys():
+            raise Exception("Invalid marker bits or dictionary size.")
+
+        charuco_specific_dict = {
+            "marker_length": marker_length,
+            "marker_bits": marker_bits,
+            "dict_size": dict_size,
+        }
+
+        board_dict.update(charuco_specific_dict)
+
+    # Write the board to a toml file.
     with open(board_name, "w") as f:
         toml.dump(board_dict, f)
 
@@ -393,39 +414,50 @@ def write_board(
 @click.option(
     "--marker_length",
     type=float,
-    required=True,
-    help="Length of marker edge in same units as square length.",
+    required=False,
+    default=None,
+    help=(
+        "Length of marker edge in same units as square length. "
+        "Only required for Charuco boards."
+    ),
 )
 @click.option(
     "--marker_bits",
     type=int,
-    required=True,
-    help="Number of bits encoded in the marker images.",
+    required=False,
+    default=None,
+    help=(
+        "Number of bits encoded in the marker images. Only required for Charuco boards."
+    ),
 )
 @click.option(
     "--dict_size",
     type=int,
-    required=True,
-    help="Size of dictionary used for marking encoding.",
+    required=False,
+    default=None,
+    help=(
+        "Size of dictionary used for marking encoding. "
+        "Only required for Charuco boards."
+    ),
 )
 def write_board_cli(
     board_name,
     board_x,
     board_y,
     square_length,
-    marker_length,
-    marker_bits,
-    dict_size,
+    marker_length: Optional[float] = None,
+    marker_bits: Optional[int] = None,
+    dict_size: Optional[int] = None,
 ):
     """Write a calibration board .toml file from the CLI."""
     write_board(
-        board_name,
-        board_x,
-        board_y,
-        square_length,
-        marker_length,
-        marker_bits,
-        dict_size,
+        board_name=board_name,
+        board_x=board_x,
+        board_y=board_y,
+        square_length=square_length,
+        marker_length=marker_length,
+        marker_bits=marker_bits,
+        dict_size=dict_size,
     )
 
 
@@ -441,7 +473,9 @@ def draw_board(
     img_height: int,
     save: str = "",
 ):
-    """Draw and save a printable calibration board jpg file.
+    """Draw and save a printable Charuco calibration board jpg file.
+
+    Note: `CheckerBoard.draw` is not yet supported.
 
     Args:
         board_name: Path to save the image file to, must end in .jpg.
@@ -565,9 +599,60 @@ def draw_board_cli(
     )
 
 
+def determine_board_type(
+    board: Union[str, CharucoBoard, Checkerboard, Dict]
+) -> Union[CharucoBoard, Checkerboard]:
+    """Determine the type of calibration board from the input.
+
+    Args:
+        board: Either the path pointing to the board.toml file, the direct CharucoBoard
+            object, the direct Checkerboard object, or a dictionary with the following
+            key / value pairs:
+                'board_x': Number of squares along the width of the board.
+                'board_y': Number of squares along the height of the board.
+                'square_length': Length of square edge in any measured units.
+                'marker_length': Length of marker edge in the same measured units as the
+                    square length. Only required for Charuco boards.
+                'marker_bits': Number of bits encoded in the marker images. Only
+                    required for Charuco boards.
+                'dict_size': Size of the dictionary used for marker encoding. Only
+                    required for Charuco boards.
+
+    Returns:
+        calib_board: Either a CharucoBoard or Checkerboard object.
+
+    Raises:
+        Exception: If the input is invalid.
+    """
+    if isinstance(board, str):
+        calib_board = read_board(board)
+    elif isinstance(board, CharucoBoard) or isinstance(board, Checkerboard):
+        calib_board = board
+    elif type(board) == dict:
+        if "marker_length" in board:
+            calib_board = CharucoBoard(
+                squaresX=board["board_x"],
+                squaresY=board["board_y"],
+                square_length=board["square_length"],
+                marker_length=board["marker_length"],
+                marker_bits=board["marker_bits"],
+                dict_size=board["dict_size"],
+            )
+        else:
+            calib_board = Checkerboard(
+                squaresX=board["board_x"],
+                squaresY=board["board_y"],
+                square_length=board["square_length"],
+            )
+    else:
+        raise Exception("Invalid board input.")
+
+    return calib_board
+
+
 def calibrate(
     session: str,
-    board: Union[str, CharucoBoard, Dict],
+    board: Union[str, CharucoBoard, Checkerboard, Dict],
     excluded_views: Tuple[str] = (),
     calib_fname: str = "",
     metadata_fname: str = "",
@@ -580,14 +665,17 @@ def calibrate(
         session: Path pointing to the session to calibrate, must include the
             calibration board images in view subfolders.
         board: Either the path pointing to the board.toml file, the direct CharucoBoard
-            object, or a dictionary with the following key / value pairs:
+            object, the direct Checkerboard object, or a dictionary with the following
+            key / value pairs:
                 'board_x': Number of squares along the width of the board.
                 'board_y': Number of squares along the height of the board.
                 'square_length': Length of square edge in any measured units.
                 'marker_length': Length of marker edge in the same measured units as the
-                    square length.
-                'marker_bits': Number of bits encoded in the marker images.
-                'dict_size': Size of the dictionary used for marker encoding.
+                    square length. Only required for Charuco boards.
+                'marker_bits': Number of bits encoded in the marker images. Only
+                    required for Charuco boards.
+                'dict_size': Size of the dictionary used for marker encoding. Only
+                    required for Charuco boards.
         excluded_views: Names (not paths) of camera views to be excluded from
             calibration. If not given, all views will be used.
         calib_fname: File path to save the calibration to (must end in .toml). Will not
@@ -631,19 +719,8 @@ def calibrate(
         else:
             calib_videos.append([calib_video[0].as_posix()])
 
-    if type(board) == str:
-        calib_board = read_board(board)
-    elif type(board) == CharucoBoard:
-        calib_board = board
-    else:
-        calib_board = CharucoBoard(
-            board["board_x"],
-            board["board_y"],
-            board["square_length"],
-            board["marker_length"],
-            board["marker_bits"],
-            board["dict_size"],
-        )
+    # Determine the type of calibration board.
+    calib_board = determine_board_type(board=board)
 
     _, corners = cgroup.calibrate_videos(calib_videos, calib_board)
 
