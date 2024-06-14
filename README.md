@@ -165,6 +165,10 @@ points3d = slap.triangulate(p2d = 'my/path',
                             reproj_error_threshold = 10, 
                             reproj_loss = 'l2', 
                             n_deriv_smooth = 2)
+
+reprojections = slap.reproject(p3d = 'my/path',
+                                  calib='my/path/calibration.toml',
+                                  fname='my/path/reprojections.h5')
 ```
 
 *It is important to note that while saving is automatic from the command line, it is optional when running the commands in a script or notebook.*
