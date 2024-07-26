@@ -125,6 +125,12 @@ The user can change the loss function with the optional `reproj_loss` argument, 
 
 Lastly, the optional `n_deriv_smooth` argument details the order of derivative to smooth for in the temporal filtering process, and it is 1 by default. To learn more, refer to the [aniposelib documentation](https://github.com/lambdaloop/aniposelib/tree/master/aniposelib).
 
+9. Reproject points back to camera coordinates 
+
+```
+slap-reproject --p3d points3d.h5 --calib calibration.toml --fname reprojections.h5
+```
+
 
 **As a script**
 
@@ -165,6 +171,10 @@ points3d = slap.triangulate(p2d = 'my/path',
                             reproj_error_threshold = 10, 
                             reproj_loss = 'l2', 
                             n_deriv_smooth = 2)
+
+reprojections = slap.reproject(p3d = 'my/path',
+                                  calib='my/path/calibration.toml',
+                                  fname='my/path/reprojections.h5')
 ```
 
 *It is important to note that while saving is automatic from the command line, it is optional when running the commands in a script or notebook.*
