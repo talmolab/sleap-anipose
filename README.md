@@ -125,6 +125,12 @@ The user can change the loss function with the optional `reproj_loss` argument, 
 
 Lastly, the optional `n_deriv_smooth` argument details the order of derivative to smooth for in the temporal filtering process, and it is 1 by default. To learn more, refer to the [aniposelib documentation](https://github.com/lambdaloop/aniposelib/tree/master/aniposelib).
 
+9. Reproject points back to camera coordinates 
+
+```
+slap-reproject --p3d points3d.h5 --calib calibration.toml --fname reprojections.h5
+```
+
 
 **As a script**
 
