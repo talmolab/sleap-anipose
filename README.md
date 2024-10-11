@@ -97,8 +97,7 @@ The `histogram_path` argument points to the path to save the histogram of reproj
 8. Generate the triangulated 3D points based on your tracking and calibration:
 
 ```
-slap-triangulate --p2d my/path --calib my/path/calibration.toml --fname my/path/points3d.h5 --frames 1000 2000 --excluded_views side --excluded_view top --disp_progress True \
---constraints 0 1 --constraints 2 3 --weak_constraints 4 5 --scale_smooth 3 --scale_length 4 --scale_length_weak 1 --reproj_error_threshold 10 --reproj_loss l2 --n_deriv_smooth 2
+slap-triangulate --p2d my/path --calib my/path/calibration.toml --fname my/path/points3d.h5 --frames 1000 2000 --excluded_views side --excluded_view top --constraints 0 1 --constraints 2 3 --weak_constraints 4 5 --scale_smooth 3 --scale_length 4 --scale_length_weak 1 --reproj_error_threshold 10 --reproj_loss l2 --n_deriv_smooth 2
 ```
 
 The required `p2d` argument points to the session containing the tracked and proofread files to be used for triangulation. 
@@ -111,7 +110,7 @@ The optional `frames` argument is a tuple covering the range of frames to triang
 
 The multi-input optional `excluded_views` argument specifies the camera views to exclude in the triangulation process. The only restriction on this feature is that the views used for triangulation must a subset of the views found in the calibration file.  
 
-The optional `disp_progress` argument is a flag that determines whether or not to display the progress of the triangulation procedure (default False). 
+<!-- The optional `disp_progress` argument is a flag that determines whether or not to display the progress of the triangulation procedure (default False). -->
 
 Aniposelib has the capability to optimize for spatiotemporal consistency along with accuracy in its optimization process. The user can take full advantage of this feature using the additional keyword arguments shown in the triangulation function. The optional `constraints` and `constraints_weak` arguments detail which edges in the animal skeleton have a fixed length. Whereas the `constraints` argument corresponds to rigid limbs such as arm length in human beings, the `constraints_weak` argument corresponds to more flexible limbs such as the tarsus length in flies. Both are K x 2 arrays, with K being the number of constraints. In the example shown above, `--constraints 0 1 --constraints 2 3` denotes two different rigid limbs, one between nodes 0 and 1, and the other between nodes 2 and 3. The same logic extends to the `constraints_weak` argument, where there is a weak constraint between nodes 4 and 5.
 
@@ -162,7 +161,6 @@ points3d = slap.triangulate(p2d = 'my/path',
                             frames = (1000, 2000), 
                             excluded_views = ('side', 'top'),
                             fname = 'my/path/points3d.h5', 
-                            disp_progress=True, 
                             constraints = [[0,1], [2,3]], 
                             constraints_weak = [[4,5]],
                             scale_smooth = 3, 
